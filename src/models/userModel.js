@@ -14,7 +14,12 @@ const userSchema = new Schema({
       return value.toLowerCase();
     },
   },
-
+  name:{
+    type: String,
+    trim: true,
+    minlength: 4,
+    maxlength: 30,
+  },
   email: {
     type: String,
     required: true,

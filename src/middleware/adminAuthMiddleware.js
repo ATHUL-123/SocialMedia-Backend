@@ -1,6 +1,6 @@
-const jwt = require('jsonwebtoken')
-const asyncHandler = require('express-async-handler')
-const User = require('../models/userModel');
+const jwt = require('jsonwebtoken');
+const asyncHandler = require('express-async-handler');
+const Admin = require('../models/adminModel');
 require('dotenv').config();
 
 const protect = asyncHandler(async (req, res, next) => {
@@ -15,13 +15,9 @@ const protect = asyncHandler(async (req, res, next) => {
             // Verify token.
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
-            // Get user from the token.
-            req.user = await User.findById(decoded.id).select('-password');
-            if (req.user.blocked) {
-                res.status(403).json({status:401, message: 'User is blocked. Access denied.' });
-                return;
-            }
-
+            // Get admin from the token by email.
+            req.admin = await Admin.findOne({ email: decoded.email }).select('-password');
+            console.log(req.admin);
             next();
         } catch (error) {
             console.log(error);
@@ -37,7 +33,6 @@ const protect = asyncHandler(async (req, res, next) => {
     }
 });
 
-
-module.exports={
+module.exports = {
     protect
-}
+};

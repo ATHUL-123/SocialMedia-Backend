@@ -100,6 +100,14 @@ const login = async ( email, password ) => {
                 return;
             }
 
+            if(existingUser.blocked){
+              reject({
+                status: 401,
+                error_code: 'USER_IS_BLocked',
+                message: 'Your Account is Blocked'
+              })
+            }
+
             // Check if the provided password matches the user's hashed password
             const passwordMatch = await bcrypt.compare(password, existingUser.password);
             if (!passwordMatch) {
@@ -116,8 +124,11 @@ const login = async ( email, password ) => {
                 userName:existingUser.userName,
                 email:existingUser.email,
                 token:generateToken(existingUser._id),
+                profilePic:existingUser.profilePic,
                 online:existingUser.online,
                 phone:existingUser.phone,
+                bio:existingUser.bio,
+                name:existingUser.name,
                 blocked:existingUser.blocked,
                 verified:existingUser.verified
             }
@@ -140,9 +151,74 @@ const login = async ( email, password ) => {
 };
 
 
+const editProfileDetails = async (data,userId)=>{
+  return new Promise(async (resolve,reject)=>{
+       
+    try {
+      
+      const user = await User.findById(userId)
+
+      if(!user){
+        reject({
+          error_code: 'DB_FETCH_ERROR',
+          message: 'User not found',
+          status: 401,
+      });
+      }
+
+      user.name=data.name;
+      user.profilePic = data.image;
+      user.bio        = data.bio;
+      console.log('asdfghjkl');
+      console.log(data.image);
+     user.save()
+      .then((updatedUser) => {
+
+        const user ={
+          _id:updatedUser._id,
+          userName:updatedUser.userName,
+          email:updatedUser.email,
+          token:generateToken(updatedUser._id),
+          profilePic:updatedUser.profilePic,
+          online:updatedUser.online,
+          phone:updatedUser.phone,
+          bio:updatedUser.bio,
+          name:updatedUser.name,
+          blocked:updatedUser.blocked,
+          verified:updatedUser.verified
+      }
+         
+        resolve({
+            status: 200,
+            message: 'user updated successfully',
+            updatedUser:user,
+        });
+    })
+    .catch((error) => {
+      console.log(error);
+        reject({
+            error_code: 'DB_UPDATE_ERROR',
+            message: 'Something went wrong while updating the post',
+            status: 500,
+        });
+    });
+
+
+
+    } catch (error) {
+      reject({
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+    });
+    }
+  })
+}
+
 
 module.exports={
     sendVerifyEmail,
     login,
-    verifyEmailOtp
+    verifyEmailOtp,
+    editProfileDetails
 }

@@ -8,11 +8,11 @@ const authMiddleware = require('../middleware/authMiddleware')
 
 // @desc    Add user post
 // @access  Private
-router.post('/addPost',postController.addUserPost)
+router.post('/addPost',authMiddleware.protect,postController.addUserPost)
 
 router.get('/getpost',authMiddleware.protect,postController.getallpost)
-router.delete('/delete-post/:postId',postController.deletePost)
-router.put('/update-post/:postId',postController.editPost)
+router.delete('/delete-post/:postId',authMiddleware.protect,postController.deletePost)
+router.put('/update-post/:postId',authMiddleware.protect,postController.editPost)
 
 
 

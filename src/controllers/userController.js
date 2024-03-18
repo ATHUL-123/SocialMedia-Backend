@@ -68,11 +68,30 @@ const verifyOTP = async (req, res) => {
 };
 
 
+const editProfile =async(req,res)=>{
+  try {
+    const data = req.body
+    const userId = req.user.id
+    userHelper.editProfileDetails(data,userId)
+    .then((response) => {
+      res.status(200).json(response);
+    })
+    .catch((err) => {
+      console.log(err);
+    
+      res.status(401).send(err); 
+    });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+}
+
 
 
 module.exports={
  
     sendOTP,
     userLogin,
-    verifyOTP
+    verifyOTP,
+    editProfile
 }
