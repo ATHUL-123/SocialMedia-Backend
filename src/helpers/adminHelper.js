@@ -1,5 +1,6 @@
-const Admin = require('../models/adminModel')
-const generateJwt = require('../services/adminJwt')
+const bcrypt = require('bcryptjs')
+const saltRounds = 10; //setting salt rounds
+const generateJwt = require('../services/jwt')
 const User = require('../models/userModel')
 
 // @desc    Login admin
@@ -8,16 +9,17 @@ const User = require('../models/userModel')
 const adminLogin = async (email, password) => {
     try {
         // Find admin by email
-        const admin = await Admin.findOne({ email:email });
-
+        const admin = await User.findOne({ email:email });
         // Check if admin exists and verify password
-        if (admin && admin.password === password) {
-            const token = await generateJwt(admin.email);
+        const passwordMatch=await bcrypt.compare(password, admin.password)
+        if (admin && passwordMatch) {
+            const token = await generateJwt(admin._id,admin.role);
             const data = {
                 _id:admin._id,
                 email:admin.email,
-                name:admin.email,
-                token:token
+                name:admin.userName,
+                token:token,
+                role:admin.role
             }
             return {
                 status: 200,

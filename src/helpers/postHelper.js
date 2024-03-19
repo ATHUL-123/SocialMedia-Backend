@@ -45,6 +45,7 @@ const addPost = async ({ imageUrl, description , userId }) => {
 const getAllPosts = async (userId) => {
     return new Promise(async (resolve, reject) => {
         try {
+         
             // Fetch all posts from the database
             const posts = await Post.find({ userId: userId }).populate('userId')
             resolve(posts);

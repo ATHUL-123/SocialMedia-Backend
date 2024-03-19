@@ -65,7 +65,10 @@ const userSchema = new Schema({
     type: Boolean,
     default: false,
   },
-
+  role:{
+    type:String,
+    default:'User'
+  },
   fcmToken: {
     type: String,
   }

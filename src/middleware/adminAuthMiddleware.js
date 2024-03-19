@@ -1,12 +1,11 @@
 const jwt = require('jsonwebtoken');
 const asyncHandler = require('express-async-handler');
-const Admin = require('../models/adminModel');
+const User = require('../models/userModel');
 require('dotenv').config();
 
 const protect = asyncHandler(async (req, res, next) => {
     let token;
-    console.log('inside protect');
-    console.log('Authorization Header:', req.headers.authorization);
+    
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             // Get token from header.
@@ -16,8 +15,12 @@ const protect = asyncHandler(async (req, res, next) => {
             const decoded = jwt.verify(token, process.env.JWT_SECRET);
 
             // Get admin from the token by email.
-            req.admin = await Admin.findOne({ email: decoded.email }).select('-password');
-            console.log(req.admin);
+            req.admin = await User.findById(decoded.id).select('-password');
+            // Check if the user is an admin
+            if (!req.admin || req.admin.role !== 'Admin') {
+                res.status(403).json({ status: 403, message: 'Forbidden. Admin access required.' });
+                return;
+            }
             next();
         } catch (error) {
             console.log(error);

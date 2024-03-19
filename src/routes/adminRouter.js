@@ -11,7 +11,7 @@ const {protect} = require('../middleware/adminAuthMiddleware')
 // @access  Public
 router.post('/login',adminController.adminLogin)
 router.get('/getallusers',protect,adminController.getAllUsers)
-router.patch('/toggle-userblock/:userId',adminController.userStatusToggle)
+router.patch('/toggle-userblock/:userId',protect,adminController.userStatusToggle)
 
 
 

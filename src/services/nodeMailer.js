@@ -19,13 +19,11 @@ async function sendEmail(data) {
              
             // Generate OTP
             const token = generateOTP();
-            const allReadySend = await Verify.findOne({email :data.email})
-            if(allReadySend){
-                console.log('rejected');
-                reject({ 
-                    status: 401,
-                    message: "Otp all ready sended"
-                })
+            const verify = await Verify.findOne({email :data.email})
+            if(verify){
+               
+                verify.token = token;
+                await verify.save()
 
             }else{
             const verify = new Verify({
@@ -36,7 +34,7 @@ async function sendEmail(data) {
                 token: token,
             });
             await verify.save();
-     
+        }
             const template = `<!DOCTYPE html>
             <html lang="en">
             <head>
@@ -70,7 +68,7 @@ async function sendEmail(data) {
             console.log('Email sent: ', info.messageId);
 
             resolve(verify);
-        }
+      
         } catch (error) {
             console.error('Error sending OTP: ', error);
             reject(error);

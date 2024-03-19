@@ -26,7 +26,7 @@ const addUserPost =async(req,res)=>{
 const getallpost = async(req,res)=>{
     try {
         const userId= req.user.id;
-       
+        
    postHelper.getAllPosts(userId)
       .then((response)=>{
         res.status(200).json(response)

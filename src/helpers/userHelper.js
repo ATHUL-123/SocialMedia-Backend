@@ -14,72 +14,75 @@ const verifyOtp = require('../services/emailVerification')
 // @desc    Sent verification link
 // @route   GET /auth/sent-verification
 // @access  Public - users
- const sendVerifyEmail = (data) => {
-    return new Promise((resolve, reject) => {
+const sendVerifyEmail = (data) => {
+  return new Promise((resolve, reject) => {
       try {
-        User.findOne({ email: data.email })
-          .then((user) => {
-            if (user) {
-                  reject({
-                    status: 401,
-                    message: "You have already an account.",
-                  });
-            } else {
-              
-                sendEmail(data)
-                .then((verify) => {
-                  resolve(verify);
-                })
-                .catch((error) => {
+          User.findOne({ email: data.email })
+              .then(async (user) => {
+                  if (user) {
+                      reject({
+                          status: 401,
+                          message: "You already have an account.",
+                      });
+                  } else {
+                      const verify = await Verify.findOne({ email: data.email });
+                      if (verify && verify.updatedAt && (Date.now() - verify.updatedAt.getTime()) < 60000) {
+                          reject({
+                              status: 401,
+                              message: "OTP already sent within the last one minute",
+                          });
+                      } else {
+                          // If everything is fine, proceed with sending the email
+                          const response = await sendEmail(data);
+                          resolve(response);
+                      }
+                  }
+              })
+              .catch((error) => {
                   reject(error);
-                });
-            }
-          })
-          .catch((error) => {
-            reject(error);
-          });
+              });
       } catch (error) {
-        reject({
-          status: 500,
-          error_code: "INTERNAL_SERVER_ERROR",
-          message: "Somethings wrong please try after sometime.",
-        });
+          reject({
+              status: 500,
+              error_code: "INTERNAL_SERVER_ERROR",
+              message: "Something went wrong please try after sometime.",
+          });
       }
-    });
-  };
+  });
+};
+
   
 
 // @desc    Verify email
 // @route   GET /auth/verify-otpToken
 // @access  Public - Registerd users
 const verifyEmailOtp = (email, token) => {
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       try {
-        console.log('here');
-        verifyOtp(email, token)
-          .then(async (response) => {
-            User.findOne({ email: email })
-              .then((user) => {
-                console.log('inside');
-                resolve(user)
-              
+          console.log('here');
+          verifyOtp(email, token)
+              .then(async (response) => {
+                  User.findOne({ email: email })
+                      .then((user) => {
+                          console.log('inside');
+                          resolve(user);
+                      })
+                      .catch((error) => {
+                          reject(error); 
+                      });
               })
               .catch((error) => {
-                reject(error); // Catch any errors from finding the user
+                  reject(error); 
               });
-          })
-          .catch((error) => {
-            reject(error); // Catch any errors from verifying OTP
-          });
       } catch (error) {
-        reject({
-          status: 500,
-          error_code: 'INTERNAL_SERVER_ERROR',
-          message: 'Something went wrong please try after sometime.',
-        });
+          reject({
+              status: 500,
+              error_code: 'INTERNAL_SERVER_ERROR',
+              message: 'Something went wrong please try after sometime.',
+          });
       }
-    });
-  };
+  });
+};
   
 
 
@@ -123,14 +126,15 @@ const login = async ( email, password ) => {
                 _id:existingUser._id,
                 userName:existingUser.userName,
                 email:existingUser.email,
-                token:generateToken(existingUser._id),
+                token:generateToken(existingUser._id,existingUser.role),
                 profilePic:existingUser.profilePic,
                 online:existingUser.online,
                 phone:existingUser.phone,
                 bio:existingUser.bio,
                 name:existingUser.name,
                 blocked:existingUser.blocked,
-                verified:existingUser.verified
+                verified:existingUser.verified,
+                role:existingUser.role
             }
 
             // If user and password match, resolve with the user data

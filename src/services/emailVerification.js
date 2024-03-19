@@ -6,55 +6,53 @@ const saltRounds = 10; //setting salt rounds
 
 
 const verifyOtp = (email, token) => {
-    return new Promise((resolve, reject) => {
+  return new Promise((resolve, reject) => {
       try {
-        console.log(email,token); 
-        console.log('deee');
-        Verify.findOne({ email:email, token:token })
-          .then(async (data) => {
-            console.log('jhfadsfahdfh');
-            if (!data?.used) {
-              await Verify.findOneAndUpdate(
-                { email: email, used: false },
-                { used: true }
-              );
-  
-              console.log('data',data);
-            registration(data)
-                .then((response) => {
-                  console.log('success');
-                  resolve(response); // Resolve response if registration is successful
-                })
-                .catch((error) => {
+          console.log(email, token);
+          console.log('deee');
+          Verify.findOne({ email: email, token: token })
+              .then(async (data) => {
+                  console.log('jhfadsfahdfh');
+                  if (!data?.used && data && data.updatedAt && (Date.now() - data.updatedAt.getTime()) < 60000) {
+                      await Verify.findOneAndUpdate({ email: email, used: false }, { used: true });
+                      console.log('data', data);
+                      registration(data)
+                          .then((response) => {
+                              console.log('success');
+                              resolve(response); // Resolve response if registration is successful
+                          })
+                          .catch((error) => {
+                              reject({
+                                  status: 500,
+                                  message: error.message,
+                                  error_code: 'INTERNAL_ERROR',
+                              }); // Catch any errors from registration
+                          });
+                  } else {
+                      console.log('invalid code');
+                      reject({
+                          status: 400,
+                          message: 'Invalid verification code or OTP expired',
+                      });
+                  }
+              })
+              .catch((err) => {
                   reject({
-                    status: 500,
-                    message: error.message,
-                    error_code: 'INTERNAL_ERROR',
-                  }); // Catch any errors from registration
-                });
-            } else {
-              reject({
-                status: 400,
-                message: 'Invalid verification code',
+                      status: 500,
+                      message: 'Invalid verification code',
+                      error_code: 'DB_FETCH_ERROR',
+                  }); // Catch any errors from finding the verification data
               });
-            }
-          })
-          .catch((err) => {
-            reject({
-              status: 500,
-              message: 'Invalid verification code',
-              error_code: 'DB_FETCH_ERROR',
-            }); // Catch any errors from finding the verification data
-          });
       } catch (error) {
-        reject({
-          status: 500,
-          message: error.message,
-          error_code: 'INTERNAL_ERROR',
-        });
+          reject({
+              status: 500,
+              message: error.message,
+              error_code: 'INTERNAL_ERROR',
+          });
       }
-    });
-  };
+  });
+};
+
 
   module.exports=verifyOtp
   

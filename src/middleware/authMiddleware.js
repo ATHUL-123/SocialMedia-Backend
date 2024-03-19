@@ -5,8 +5,7 @@ require('dotenv').config();
 
 const protect = asyncHandler(async (req, res, next) => {
     let token;
-    console.log('inside protect');
-    console.log('Authorization Header:', req.headers.authorization);
+    
     if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
         try {
             // Get token from header.
@@ -18,10 +17,14 @@ const protect = asyncHandler(async (req, res, next) => {
             // Get user from the token.
             req.user = await User.findById(decoded.id).select('-password');
             if (req.user.blocked) {
+               
                 res.status(403).json({status:401, message: 'User is blocked. Access denied.' });
                 return;
             }
-
+            if (!req.user || req.user.role !== 'User') {
+                res.status(403).json({ status: 403, message: 'Forbidden. Admin access required.' });
+                return;
+            }
             next();
         } catch (error) {
             console.log(error);
