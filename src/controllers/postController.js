@@ -81,10 +81,44 @@ const editPost = (req, res) => {
 
 
 
+const getPostByUserId =(req,res)=>{
+  try {
+    
+    const {userId} = req.params;
+    console.log(userId);
+    postHelper.getPostByUserId(userId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const getAllFolloweesPost =(req,res)=>{
+  try {
+    const userId = req.user.id
+    postHelper.getAllFolloweesPost(userId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
 
 module.exports={
     addUserPost,
     getallpost,
     deletePost,
-    editPost
+    getPostByUserId,
+    editPost,
+    getAllFolloweesPost
 }

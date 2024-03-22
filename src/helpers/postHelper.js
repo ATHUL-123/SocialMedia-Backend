@@ -1,4 +1,6 @@
 const Post =require('../models/postModel');
+const Connection = require('../models/connectionModel');
+const User = require('../models/userModel')
 
 
 
@@ -142,9 +144,63 @@ const updatePost = async (postId,data) => {
 };
 
 
+const getPostByUserId = async (userId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Find posts by user ID
+            const posts = await Post.find({ userId: userId });
+            console.log('adfadsf');
+            console.log(posts);
+            // Resolve with the posts
+            resolve(posts);
+        } catch (error) {
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+const getAllFolloweesPost = async (userId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Step 1: Find the user's connections
+            const userConnection = await Connection.findOne({ userId: userId });
+
+            if (!userConnection) {
+                resolve([]); // No connections found, return an empty array
+                return;
+            }
+
+            // Step 2: Retrieve posts of each followee
+            const followees = userConnection.following;
+            const followeesPosts = [];
+            for (const followeeId of followees) {
+                const posts = await Post.find({ userId: followeeId });
+                followeesPosts.push(...posts);
+            }
+
+            // Step 3: Aggregate and return posts
+            resolve(followeesPosts);
+        } catch (error) {
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+
+
 module.exports ={
     addPost,
     getAllPosts,
     deletePost,
-    updatePost
+    updatePost,
+    getPostByUserId,
+    getAllFolloweesPost
 }
