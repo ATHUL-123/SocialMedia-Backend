@@ -19,14 +19,14 @@ async function sendEmail(data) {
              
             // Generate OTP
             const token = generateOTP();
-            const verify = await Verify.findOne({email :data.email})
+            let verify = await Verify.findOne({email :data.email})
             if(verify){
                
                 verify.token = token;
                 await verify.save()
 
             }else{
-            const verify = new Verify({
+            verify = new Verify({
                 email: data.email,
                 userName: data.userName,
                 phone:data.phone,
