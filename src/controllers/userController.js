@@ -1,3 +1,4 @@
+const { response } = require('express');
 const userHelper = require('../helpers/userHelper')
 const asyncHandler = require('express-async-handler')
 
@@ -86,12 +87,155 @@ const editProfile =async(req,res)=>{
   }
 }
 
+const googleLogin =async (req,res)=>{
+  try {
+  console.log('haiiii');
+  const {email} = req.body
+  console.log(email);
+  userHelper.loginWithGoogle(email)
+      .then((response)=>{
+        res.status(200).json({...response})
+      })
+      .catch((err)=>{
+        res.status(500).send(err);
+      })
+    } catch (error) {
+        res.status(500).send(error);
+    }
+}
 
+const fetchUsers = async(req,res)=>{
+  try {
+    const {page,limit} =req.query
+    const userId = req.user.id
+    userHelper.fetchUsersHelp(userId,page,limit)
+    .then((response) => {
+    
+      res.status(200).json(response);
+    })
+    .catch((err) => {
+      console.log(err);
+    
+      res.status(401).send(err); 
+    });
+  } catch (error) {
+    res.status(500).send(error);
+  }
+}
+
+// @desc    Follow user
+// @route   POST /user/:userId/follow/:followeeUserId
+// @access  Registerd users
+ const followUser = (req, res) => {
+  try {
+   
+    const userId = req.user.id
+    const {followeeId} = req.params;
+  
+    userHelper.followHelper(userId, followeeId)
+    .then((response) => {
+      res.status(200).send(response);
+    }).catch((error) => {
+      res.status(500).send(error);
+    })
+  } catch (error) {
+    res.status(500).send(error);
+  }
+}
+
+const unFollowUser = (req,res)=>{
+  try {
+    console.log('haai');
+    const userId = req.user.id
+    const {unfolloweeId} = req.params;
+  userHelper.unFollowHelper(userId ,unfolloweeId)
+   .then((response)=>{
+    res.status(200).send(response);
+   })
+   .catch((error)=>{
+    res.status(500).send(error)
+   })
+
+  } catch (error) {
+    res.status(500).send(error);
+  }
+}
+
+const getFollowing =(req,res)=>{
+try {
+  const userId = req.user.id
+  const {page,limit} =req.query
+  userHelper.getFollowing(userId,page,limit)
+  .then((response)=>{
+    res.status(200).send(response);
+  })
+  .catch((error)=>{
+   res.status(500).send(error)
+  })
+} catch (error) {
+  res.status(500).send(error);
+}
+}
+
+const getFollowers =(req,res)=>{
+  try {
+    const userId = req.user.id
+    const {page,limit} =req.query
+    userHelper.getFollowers(userId,page,limit)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error);
+  }
+  }
+
+
+const getUser = (req,res)=>{
+  try {
+    const {userId} = req.params
+    userHelper.getUserById(userId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error); 
+  }
+}
+
+const togglePrivacy = (req,res)=>{
+  try {
+    const userId = req.user.id
+    userHelper.togglePrivacy(userId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error); 
+  }
+}
 
 module.exports={
  
     sendOTP,
     userLogin,
     verifyOTP,
-    editProfile
+    editProfile,
+    googleLogin,
+    fetchUsers,
+    followUser,
+    unFollowUser,
+    getFollowing,
+    getUser,
+    togglePrivacy,
+    getFollowers
 }

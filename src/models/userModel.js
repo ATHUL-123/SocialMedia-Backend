@@ -69,9 +69,11 @@ const userSchema = new Schema({
     type:String,
     default:'User'
   },
-  fcmToken: {
-    type: String,
+  isPrivate:{
+    type:Boolean,
+    default:false
   }
+ 
 },{
   timestamps: true
 });

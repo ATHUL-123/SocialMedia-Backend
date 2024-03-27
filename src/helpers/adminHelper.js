@@ -12,7 +12,7 @@ const adminLogin = async (email, password) => {
         const admin = await User.findOne({ email:email });
         // Check if admin exists and verify password
         const passwordMatch=await bcrypt.compare(password, admin.password)
-        if (admin && passwordMatch) {
+        if (admin && passwordMatch && admin.role ==='Admin') {
             const token = await generateJwt(admin._id,admin.role);
             const data = {
                 _id:admin._id,

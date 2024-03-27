@@ -14,6 +14,10 @@ router.get('/getpost',authMiddleware.protect,postController.getallpost)
 router.delete('/delete-post/:postId',authMiddleware.protect,postController.deletePost)
 router.put('/update-post/:postId',authMiddleware.protect,postController.editPost)
 
+router.get('/getuserpost/:userId',postController.getPostByUserId)
+
+
+router.get('/allfollowingsPost',authMiddleware.protect,postController.getAllFolloweesPost)
 
 
 
