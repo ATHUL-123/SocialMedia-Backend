@@ -13,6 +13,8 @@ router.post('/login',adminController.adminLogin)
 router.get('/getallusers',protect,adminController.getAllUsers)
 router.patch('/toggle-userblock/:userId',protect,adminController.userStatusToggle)
 
+router.get('/get-reports',adminController.getAllReports)
 
+router.put('/take-action',adminController.takeAction)
 
 module.exports=router

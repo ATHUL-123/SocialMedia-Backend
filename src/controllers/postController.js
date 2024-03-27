@@ -83,7 +83,7 @@ const editPost = (req, res) => {
 
 const getPostByUserId =(req,res)=>{
   try {
-    
+    console.log('haai');
     const {userId} = req.params;
     console.log(userId);
     postHelper.getPostByUserId(userId)
@@ -100,8 +100,10 @@ const getPostByUserId =(req,res)=>{
 
 const getAllFolloweesPost =(req,res)=>{
   try {
+    const {page,pageSize} =req.query
     const userId = req.user.id
-    postHelper.getAllFolloweesPost(userId)
+    console.log('insideee');
+    postHelper.getAllFolloweesPost(userId,page,pageSize)
     .then((response) => {
       res.status(200).send(response);
     })
@@ -114,11 +116,111 @@ const getAllFolloweesPost =(req,res)=>{
 }
 
 
+const likePost =async(req,res)=>{
+  try {
+    const userId = req.user.id;
+    const {postId} = req.params
+    postHelper.likePost(userId,postId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const unLikePost =async(req,res)=>{
+  try {
+    const userId = req.user.id;
+    const {postId} = req.params
+    postHelper.unLikePost(userId,postId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const reportPost =async(req,res)=>{
+  try {
+    const data = req.body
+    console.log(data);
+    postHelper.reportPost(data)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const addComment = async(req,res)=>{
+  try {
+    const data = req.body
+    postHelper.addComment(data)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const getAllComments = async(req,res)=>{
+  try {
+    const {postId} =  req.params
+    postHelper.getAllComments(postId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const deleteComment = async(req,res)=>{
+  try{
+    console.log('dele');
+  const { commentId } =  req.params
+  postHelper.deleteComment(commentId)
+  .then((response) => {
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
 module.exports={
     addUserPost,
     getallpost,
     deletePost,
     getPostByUserId,
     editPost,
-    getAllFolloweesPost
+    getAllFolloweesPost,
+    likePost,
+    unLikePost,
+    reportPost,
+    addComment,
+    getAllComments,
+    deleteComment
 }

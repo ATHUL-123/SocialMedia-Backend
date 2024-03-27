@@ -61,7 +61,7 @@ const verifyEmailOtp = (email, token) => {
   return new Promise((resolve, reject) => {
     try {
       console.log('here');
-      verifyOtp(email, token)
+      verifyOtp(email,token)
         .then(async (response) => {
           User.findOne({ email: email })
             .then((user) => {
@@ -274,21 +274,27 @@ const editProfileDetails = async (data, userId) => {
 }
 
 
+const mongoose = require('mongoose');
 const fetchUsersHelp = async (userId, page, limit) => {
   return new Promise(async (resolve, reject) => {
     try {
-      
-
       const connection = await Connection.findOne({ userId: userId });
-      const followingIds = connection.following;
-      const totalCount = await User.countDocuments({ _id: { $nin: followingIds } });
-      const users = await User.find({ _id: { $nin: followingIds } })
+      let followingIds = [];
+      if (connection && connection.following) {
+        followingIds = connection.following;
+      }
+
+      // Convert userId to ObjectId if it's a string
+      if (typeof userId === 'string') {
+        userId = new mongoose.Types.ObjectId(userId);
+      }
+
+      const totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
+      const users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
         .skip((page - 1) * limit)
         .limit(limit);
 
-
       resolve({
-
         data: users,
         page,
         total: totalCount
@@ -303,6 +309,8 @@ const fetchUsersHelp = async (userId, page, limit) => {
     }
   });
 };
+  
+
 
 
 
@@ -313,51 +321,65 @@ const isValidUserId = async (userId) => {
     const user = await User.findOne({ _id: userId });
     return !!user;
   } catch (error) {
+    console.error("Error in isValidUserId:", error);
     return false;
   }
 }
 
-// @desc    Follow user
-// @route   POST /user/:userId/follow/:followeeUserId
-// @access  Registerd users
-const followHelper = (userId, followeeId) => {
-  return new Promise((resolve, reject) => {
-    try {
-      //Checking userIDs
-      if (!isValidUserId(userId) && !isValidUserId(followeeId)) {
-        reject(new Error("Invalid user ID"));
-        return;
-      }
-      console.log('setset');
-      Connection.findOneAndUpdate(
-        { userId: userId },
-        { $addToSet: { following: followeeId } },
+const addRequest = async (userId, followeeId) => {
+  try {
+    const user = await User.findById(followeeId);
+    if (user.isPrivate) {
+      const userConnection = await Connection.findOneAndUpdate(
+        { userId: followeeId },
+        { $addToSet: { requested: userId } },
         { upsert: true, new: true }
-      ).exec()
-        .then((userConnection) => {
-          Connection.findOneAndUpdate(
-            { userId: followeeId },
-            { $addToSet: { followers: userId } },
-            { upsert: true, new: true }
-          ).exec()
-            .then((followeeConnection) => {
-
-              resolve({ userConnection, followeeConnection });
-
-            })
-            .catch((error) => {
-              reject(error);
-            });
-        })
-        .catch((error) => {
-          reject(error);
-        });
-    } catch (error) {
-      console.log(error.message);
-      reject(error)
+      );
+      return false; // Indicate that request is added
     }
-  })
+    return true; // No request needed for public user
+  } catch (error) {
+    console.error("Error in addRequest:", error);
+    return false;
+  }
 }
+
+const followHelper = async (userId, followeeId) => {
+  try {
+    // Validate user IDs
+    const userIdValid = await isValidUserId(userId);
+    const followeeIdValid = await isValidUserId(followeeId);
+    
+    if (!userIdValid || !followeeIdValid) {
+      throw new Error("Invalid user ID");
+    }
+
+    // Check if a follow request is required
+    const requestAdded = await addRequest(userId, followeeId);
+    if (!requestAdded) {
+      return "Follow request sent to private user";
+    }
+
+    // Update following and followers lists
+    const userConnection = await Connection.findOneAndUpdate(
+      { userId: userId },
+      { $addToSet: { following: followeeId } },
+      { upsert: true, new: true }
+    );
+
+    const followeeConnection = await Connection.findOneAndUpdate(
+      { userId: followeeId },
+      { $addToSet: { followers: userId } },
+      { upsert: true, new: true }
+    );
+
+    return { userConnection, followeeConnection };
+  } catch (error) {
+    console.error("Error in followHelper:", error.message);
+    throw error; // Propagate the error
+  }
+}
+
 
 
 // @desc    UnFollow user
@@ -464,36 +486,61 @@ const getFollowers = (userId, page, limit) => {
 };
 
 
-const getUserById = (userId) => {
-  return new Promise((resolve, reject) => {
+const getUserById = (userId, ownId) => {
+  return new Promise(async (resolve, reject) => {
     try {
-      // Assuming you have a User model
-      User.findById(userId)
-        .then((user) => {
-          if (!user) {
-            throw new Error('User not found');
-          }
-          const data={
-            userName:user.userName,
-            name:user.name,
-            _id:user._id,
-            email:user.email,
-            bio:user.bio,
-            isPrivate:user.isPrivate,
-            profilePic:user.profilePic,
-            phone:user.phone,
-            online:user.online
-          }
-          resolve(data);
-        })
-        .catch((error) => {
-          reject(error);
-        });
+      console.log('Fetching user...');
+      
+      // Fetch the user by userId
+      const user = await User.findById(userId);
+      
+      if (!user) {
+        throw new Error('User not found');
+      }
+      
+   
+      const userConnection = await Connection.findOne({userId:ownId});
+      
+ 
+     
+      let access = !user.isPrivate;
+      let following=false;
+      
+      if (userConnection && userConnection.following.includes(userId)) {
+        access = true;
+       following=true;
+      }
+
+      const OtherUserConnection = await Connection.findOne({userId:userId});
+      if (OtherUserConnection && OtherUserConnection.requested.includes(ownId)){
+        following='requested'
+      }
+
+      
+    
+      const userData = {
+        userName: user.userName,
+        name: user.name,
+        _id: user._id,
+        email: user.email,
+        bio: user.bio,
+        isPrivate: user.isPrivate,
+        profilePic: user.profilePic,
+        phone: user.phone,
+        online: user.online,
+        access: access,
+        following:following
+      };
+      
+      resolve(userData);
     } catch (error) {
+      console.error('Error in getUserById:', error);
       reject(error);
     }
   });
 };
+
+
 
 
 const togglePrivacy = async (userId) => {
@@ -529,6 +576,121 @@ const togglePrivacy = async (userId) => {
 };
 
 
+const getRequested = async (userId) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          // Step 1: Find the user's connections
+          const userConnection = await Connection.findOne({ userId: userId }).populate('requested')
+
+          if (!userConnection) {
+              resolve([]); // No connections found, return an empty array
+              return;
+          }
+           
+          if(userConnection.requested){
+            resolve(userConnection.requested);
+          }else{
+            reject({message:"No Requests"})
+          }
+          
+      } catch (error) {
+          reject({
+              error_code: 'INTERNAL_SERVER_ERROR',
+              message: 'Something went wrong on the server',
+              status: 500,
+          });
+      }
+  });
+}
+
+const acceptRequest = async (userId, requestId) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+        console.log(userId,requestId);
+        console.log('insisnsinsinsin');
+          // Step 1: Find the user's connections
+          const userConnection = await Connection.findOne({ userId: userId })
+
+          if (!userConnection) {
+              reject({ message: "User connection not found" });
+              return;
+          }
+
+          // Step 2: Check if there are any requests
+          if (!userConnection.requested || userConnection.requested.length === 0) {
+            reject({ message: "No pending requests found" });
+            return;
+          }
+
+          // Step 3: Remove requestId from requested array and add it to followers and following arrays
+         const user = await Connection.findOneAndUpdate(
+            { userId: userId },
+            { 
+              $pull: { requested: requestId },
+              $addToSet: { followers: requestId }
+            },
+            { upsert: true, new: true }
+          );
+
+          await Connection.findOneAndUpdate(
+            { userId: requestId },
+            { $addToSet: { following: userId } },
+            { upsert: true, new: true }
+          );
+    console.log(user);
+          resolve("Request accepted successfully");
+          
+      } catch (error) {
+          console.error("Error in acceptRequest:", error);
+          reject({
+              error_code: 'INTERNAL_SERVER_ERROR',
+              message: 'Something went wrong on the server',
+              status: 500,
+          });
+      }
+  });
+}
+
+
+const rejectRequest = async (userId, requestId) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+          // Step 1: Find the user's connections
+          const userConnection = await Connection.findOne({ userId: userId });
+
+          if (!userConnection) {
+              reject({ message: "User connection not found" });
+              return;
+          }
+
+          // Step 2: Check if there are any requests
+          if (!userConnection.requested || userConnection.requested.length === 0) {
+              reject({ message: "No pending requests found" });
+              return;
+          }
+
+          // Step 3: Remove requestId from requested array
+          const updatedUser = await Connection.findOneAndUpdate(
+              { userId: userId },
+              { $pull: { requested: requestId } },
+              { new: true }
+          );
+
+     
+
+          resolve("Request rejected successfully");
+      } catch (error) {
+          console.error("Error in rejectRequest:", error);
+          reject({
+              error_code: 'INTERNAL_SERVER_ERROR',
+              message: 'Something went wrong on the server',
+              status: 500,
+          });
+      }
+  });
+}
+
+
 
 
 module.exports = {
@@ -543,7 +705,10 @@ module.exports = {
   getFollowing,
   getUserById,
   togglePrivacy,
-  getFollowers
+  getFollowers,
+  getRequested,
+  acceptRequest,
+  rejectRequest
 }
 
 

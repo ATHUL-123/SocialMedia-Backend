@@ -1,14 +1,15 @@
-const Post =require('../models/postModel');
+const Post = require('../models/postModel');
 const Connection = require('../models/connectionModel');
 const User = require('../models/userModel')
-
+const Report = require('../models/reportsModel')
+const Comment = require('../models/commentModel')
 
 
 
 // @desc    Add New Post
 // @route   POST /posts/addpost
 // @access  Private
-const addPost = async ({ imageUrl, description , userId }) => {
+const addPost = async ({ imageUrl, description, userId }) => {
     return new Promise(async (resolve, reject) => {
         try {
             // Create a new post object
@@ -47,11 +48,11 @@ const addPost = async ({ imageUrl, description , userId }) => {
 const getAllPosts = async (userId) => {
     return new Promise(async (resolve, reject) => {
         try {
-         
+
             // Fetch all posts from the database
             const posts = await Post.find({ userId: userId }).populate('userId')
             resolve(posts);
-            
+
         } catch (error) {
             reject({
                 error_code: 'INTERNAL_SERVER_ERROR',
@@ -67,38 +68,38 @@ const getAllPosts = async (userId) => {
 // @desc    Delete post
 //@route    DELETE /post/delete/post/:postId
 // @access  Registerd users
-const deletePost= (postId) => {
+const deletePost = (postId) => {
     return new Promise((resolve, reject) => {
-      try {
-        Post.deleteOne({ _id: postId })
-          .then((response) => {
-            resolve(response);
-            console.log(response);
-          })
-          .catch((err) => {
+        try {
+            Post.deleteOne({ _id: postId })
+                .then((response) => {
+                    resolve(response);
+                    console.log(response);
+                })
+                .catch((err) => {
+                    reject({
+                        status: 500,
+                        error_code: "DB_FETCH_ERROR",
+                        message: err.message,
+                        err,
+                    });
+                });
+        } catch (error) {
             reject({
-              status: 500,
-              error_code: "DB_FETCH_ERROR",
-              message: err.message,
-              err,
+                status: 500,
+                error_code: "INTERNAL_SERVER_ERROR",
+                message: error.message,
+                error,
             });
-          });
-      } catch (error) {
-        reject({
-          status: 500,
-          error_code: "INTERNAL_SERVER_ERROR",
-          message: error.message,
-          error,
-        });
-      }
+        }
     });
-  };
+};
 
 
 // @desc    Update Post
 // @route   PUT /posts/updatepost/:id
 // @access  Private
-const updatePost = async (postId,data) => {
+const updatePost = async (postId, data) => {
     return new Promise(async (resolve, reject) => {
         try {
             // Find the post by ID
@@ -147,13 +148,25 @@ const updatePost = async (postId,data) => {
 const getPostByUserId = async (userId) => {
     return new Promise(async (resolve, reject) => {
         try {
-            // Find posts by user ID
-            const posts = await Post.find({ userId: userId });
-            console.log('adfadsf');
+
+            // Find user by ID
+            const user = await User.findById(userId);
+            if (!user) {
+                reject({
+                    error_code: 'USER_NOT_FOUND',
+                    message: 'User not found',
+                    status: 404,
+                });
+                return;
+            }
+
+
+            // Find posts by user ID and populate user details
+            const posts = await Post.find({ userId: userId }).populate('userId');
             console.log(posts);
-            // Resolve with the posts
             resolve(posts);
         } catch (error) {
+            console.error(error);
             reject({
                 error_code: 'INTERNAL_SERVER_ERROR',
                 message: 'Something went wrong on the server',
@@ -163,7 +176,23 @@ const getPostByUserId = async (userId) => {
     });
 };
 
-const getAllFolloweesPost = async (userId) => {
+
+
+
+
+const checkIfPostIsLiked = (post, userId) => {
+    const { Types } = require('mongoose'); // Import Types from mongoose
+    // Convert userId to ObjectId using Types.ObjectId
+    const userIdObject = new Types.ObjectId(userId);
+   
+    // Assuming post.likes is an array of user IDs who liked the post 
+    return post.likes.some(likeId => likeId.equals(userIdObject)); // Check if any likeId equals userIdObject
+};
+
+
+
+
+const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
     return new Promise(async (resolve, reject) => {
         try {
             // Step 1: Find the user's connections
@@ -177,13 +206,70 @@ const getAllFolloweesPost = async (userId) => {
             // Step 2: Retrieve posts of each followee
             const followees = userConnection.following;
             const followeesPosts = [];
-            for (const followeeId of followees) {
-                const posts = await Post.find({ userId: followeeId });
-                followeesPosts.push(...posts);
-            }
 
-            // Step 3: Aggregate and return posts
-            resolve(followeesPosts);
+            for (const followeeId of followees) {
+                const posts = await Post.find({ userId: followeeId })
+                .populate('userId')
+                .populate('likes')
+                for (const post of posts) {
+                    const isLiked = checkIfPostIsLiked(post, userId); // Add the isLiked field based on some condition
+                    const postObject = post.toObject(); // Convert Mongoose document to plain JavaScript object
+                    postObject.isLiked = isLiked;
+                    followeesPosts.push(postObject); // Push the modified post object into followeesPosts
+                }
+            }
+            
+
+            // Now followeesPosts contains all posts with the isLiked field added
+
+
+            // Step 3: Sort posts by updatedAt time
+            followeesPosts.sort((a, b) => b.updatedAt - a.updatedAt);
+
+            // Step 4: Apply pagination
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = page * pageSize;
+            const paginatedPosts = followeesPosts.slice(startIndex, endIndex);
+
+            resolve(paginatedPosts);
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+const likePost = async (userId, postId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            const post = await Post.findById(postId);
+            if (!post) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Post not found',
+                    status: 404,
+                });
+                return;
+            }
+            // Check if the user has already liked the post
+            if (post.likes.includes(userId)) {
+                resolve({
+                    message: 'User already liked the post',
+                    status: 200,
+                });
+                return;
+            }
+            // Update the likes array
+            post.likes.push(userId);
+            await post.save();
+            resolve({
+                message: 'Post liked successfully',
+                status: 200,
+            });
         } catch (error) {
             reject({
                 error_code: 'INTERNAL_SERVER_ERROR',
@@ -195,12 +281,200 @@ const getAllFolloweesPost = async (userId) => {
 };
 
 
+const unLikePost = async (userId, postId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+           
+            const post = await Post.findById(postId);
+            if (!post) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Post not found',
+                    status: 404,
+                });
+                return;
+            }
+            
+            // Check if the user has already liked the post
+            const likedIndex = post.likes.indexOf(userId);
+            if (likedIndex === -1) {
+                resolve({
+                    message: 'User has not liked the post',
+                    status: 200,
+                });
+                return;
+            }
+            
+            // Remove the user's like from the likes array
+            post.likes.splice(likedIndex, 1);
+            await post.save();
+            
+            resolve({
+                message: 'Post unliked successfully',
+                status: 200,
+            });
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
 
-module.exports ={
+const reportPost = async ({reporterId, reporterUsername, reportType, targetId}) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+           console.log(targetId);
+            // Check if the post exists
+            const post = await Post.findById(targetId);
+            if (!post) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Post not found',
+                    status: 404,
+                });
+                return;
+            }
+
+            // Create a new report object
+            const newReport = new Report({
+                reporterId,
+                reporterUsername,
+                reportType,
+                targetId,
+            });
+
+            // Save the report
+            await newReport.save();
+
+            resolve({
+                message: 'Post reported successfully',
+                status: 200,
+            });
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+
+const addComment = async ({userId,userName,postId,content}) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+          
+            // Check if the post exists
+            const post = await Post.findById(postId);
+            if (!post) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Post not found',
+                    status: 404,
+                });
+                return;
+            }
+
+            // Create a new report object
+            const newComment = new Comment({
+                userId,
+                userName,
+                postId,
+                content,
+            });
+
+            // Save the report
+            await newComment.save();
+
+            resolve({
+                message: 'Comment added successfully',
+                status: 200,
+            });
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+const getAllComments = (postId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Find all comments with the given postId
+            const comments = await Comment.find({ postId }).populate('userId');
+
+            // Resolve with comments
+            resolve({
+                comments,
+                message: 'Comments retrieved successfully',
+                status: 200,
+            });
+        } catch (error) {
+            console.log(error);
+            // Reject with error
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+const deleteComment = (commentId) => {
+    return new Promise((resolve, reject) => {
+        Comment.findByIdAndDelete(commentId)
+            .then((deletedComment) => {
+                if (deletedComment) {
+                    return Comment.deleteMany({ parentId: deletedComment._id });
+                } else {
+                    reject({
+                        error_code: 'NOT_FOUND',
+                        message: 'Comment not found',
+                        status: 404,
+                    });
+                }
+            })
+            .then(() => {
+                resolve({
+                    message: 'Comment deleted successfully',
+                    status: 200,
+                });
+            })
+            .catch((error) => {
+                console.error(error);
+                reject({
+                    error_code: 'INTERNAL_SERVER_ERROR',
+                    message: 'Something went wrong on the server',
+                    status: 500,
+                });
+            });
+    });
+};
+
+
+
+module.exports = {
     addPost,
     getAllPosts,
     deletePost,
     updatePost,
     getPostByUserId,
-    getAllFolloweesPost
+    getAllFolloweesPost,
+    likePost,
+    unLikePost,
+    reportPost,
+    addComment,
+    getAllComments,
+    deleteComment
 }

@@ -28,4 +28,11 @@ router.get('/fetch-followers',protect,userController.getFollowers)
 router.get('/get-single-user/:userId',protect,userController.getUser)
 
 router.patch('/toggleprivacy',protect,userController.togglePrivacy)
+
+router.get('/get-request',protect,userController.getAllRequest)
+
+router.put('/accept-request/:requestId',protect,userController.acceptRequest)
+
+router.put('/reject-request/:requestId',protect,userController.rejectRequest)
+
 module.exports=router

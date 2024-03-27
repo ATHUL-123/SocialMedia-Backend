@@ -13,7 +13,7 @@ const verifyOtp = (email, token) => {
           Verify.findOne({ email: email, token: token })
               .then(async (data) => {
                   console.log('jhfadsfahdfh');
-                  if (!data?.used && data && data.updatedAt && (Date.now() - data.updatedAt.getTime()) < 60000) {
+                  if ( data && data.updatedAt && (Date.now() - data.updatedAt.getTime()) < 60000) {
                       await Verify.findOneAndUpdate({ email: email, used: false }, { used: true });
                       console.log('data', data);
                       registration(data)

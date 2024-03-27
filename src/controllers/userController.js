@@ -197,7 +197,8 @@ const getFollowers =(req,res)=>{
 const getUser = (req,res)=>{
   try {
     const {userId} = req.params
-    userHelper.getUserById(userId)
+    const ownId    = req.user.id
+    userHelper.getUserById(userId,ownId)
     .then((response)=>{
       res.status(200).send(response);
     })
@@ -224,6 +225,58 @@ const togglePrivacy = (req,res)=>{
   }
 }
 
+
+const getAllRequest =(req,res)=>{
+  try {
+    const userId = req.user.id
+    userHelper.getRequested(userId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error); 
+  }
+}
+
+
+const acceptRequest =(req,res)=>{
+  try {
+    const userId = req.user.id
+    const {requestId} = req.params
+    console.log(req.params,"params");
+    userHelper.acceptRequest(userId,requestId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error); 
+  }
+}
+
+const rejectRequest =(req,res)=>{
+  try {
+    const userId = req.user.id
+    const { requestId } = req.params
+    console.log(req.params,"params");
+    userHelper.rejectRequest(userId,requestId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error); 
+  }
+}
+
+
 module.exports={
  
     sendOTP,
@@ -237,5 +290,9 @@ module.exports={
     getFollowing,
     getUser,
     togglePrivacy,
-    getFollowers
+    getFollowers,
+    getAllRequest,
+    acceptRequest,
+    rejectRequest
+
 }
