@@ -1,13 +1,14 @@
 const bcrypt = require('bcryptjs')
 const saltRounds = 10; //setting salt rounds
 const User = require('../models/userModel');
-const { response } = require('express');
+
 const sendEmail = require('../services/nodeMailer')
 const generateToken = require('../services/jwt');
 const Verify = require('../models/verifyModel')
 const verifyOtp = require('../services/emailVerification')
 const Connection = require('../models/connectionModel')
-
+const Razorpay = require("razorpay");
+require("dotenv").config();
 
 
 
@@ -199,6 +200,7 @@ const login = async (email, password) => {
 
       });
     } catch (error) {
+      console.log(error);
       reject({
         error_code: 'INTERNAL_SERVER_ERROR',
         message: 'Something went wrong on the server',
@@ -275,7 +277,7 @@ const editProfileDetails = async (data, userId) => {
 
 
 const mongoose = require('mongoose');
-const fetchUsersHelp = async (userId, page, limit) => {
+const fetchUsersHelp = async (userId, page, limit,searchQuery ='') => {
   return new Promise(async (resolve, reject) => {
     try {
       const connection = await Connection.findOne({ userId: userId });
@@ -288,11 +290,22 @@ const fetchUsersHelp = async (userId, page, limit) => {
       if (typeof userId === 'string') {
         userId = new mongoose.Types.ObjectId(userId);
       }
+      
+      let totalCount ;
+      let users;
+      if(searchQuery){
+         totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' },userName:{$regex:searchQuery,$options:'i'} });
+         users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' },userName:{$regex:searchQuery,$options:'i'} })
+          .skip((page - 1) * limit)
+          .limit(limit);
+      }else{
+         totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
+         users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
+          .skip((page - 1) * limit)
+          .limit(limit);
+      }
 
-      const totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
-      const users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
-        .skip((page - 1) * limit)
-        .limit(limit);
+
 
       resolve({
         data: users,
@@ -691,6 +704,56 @@ const rejectRequest = async (userId, requestId) => {
 }
 
 
+const createPayment = () => {
+  return new Promise(async (resolve, reject) => {
+      try {
+  
+          const instance = new Razorpay({
+              key_id: process.env.RAZORPAY_KEY_ID,
+              key_secret: process.env.RAZORPAY_SECRET,
+          });
+            
+          const options = {
+              amount: 1200 * 100, // amount in smallest currency unit
+              currency: "INR",
+              receipt: "receipt_order_74394",
+          };
+
+          const order = await instance.orders.create(options);
+
+          if (!order) {
+              reject("Some error occurred while creating the order");
+              return;
+          }
+
+          resolve(order);
+      } catch (error) {
+          console.error("Error in createPayment:", error);
+          reject(error);
+      }
+  });
+};
+
+const successPayment = (userId) => {
+  return new Promise(async (resolve, reject) => {
+      try {
+         
+          const updatedUser = await User.findByIdAndUpdate(userId, { verified: true });
+
+        
+          if (!updatedUser) {
+              throw new Error("Failed to update user's verified status");
+          }
+ 
+          console.log('successs');
+          resolve(updatedUser);
+      } catch (error) {
+          console.error("Error in successPayment:", error);
+          reject(error);
+      }
+  });
+};
+
 
 
 module.exports = {
@@ -708,7 +771,9 @@ module.exports = {
   getFollowers,
   getRequested,
   acceptRequest,
-  rejectRequest
+  rejectRequest,
+  createPayment,
+  successPayment
 }
 
 

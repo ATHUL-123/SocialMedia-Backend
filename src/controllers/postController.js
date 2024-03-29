@@ -179,6 +179,37 @@ const addComment = async(req,res)=>{
   }
 }
 
+const replyComment = async(req,res)=>{
+  try {
+    const data = req.body
+    const {commentId} = req.params
+    postHelper.replyComment(commentId,data)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const fetchReplies = async(req,res)=>{
+  try {
+    const {commentId} = req.params
+    postHelper.fetchReplies(commentId)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
 const getAllComments = async(req,res)=>{
   try {
     const {postId} =  req.params
@@ -222,5 +253,7 @@ module.exports={
     reportPost,
     addComment,
     getAllComments,
-    deleteComment
+    deleteComment,
+    replyComment,
+    fetchReplies
 }

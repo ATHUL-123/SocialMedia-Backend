@@ -31,5 +31,7 @@ router.get('/fetch-comments/:postId',authMiddleware.protect,postController.getAl
 
 router.delete('/delete-comment/:commentId',authMiddleware.protect,postController.deleteComment)
 
+router.put('/comments/reply-to/:commentId',authMiddleware.protect,postController.replyComment)
 
+router.get('/fetch-replies/:commentId',postController.fetchReplies)
 module.exports=router

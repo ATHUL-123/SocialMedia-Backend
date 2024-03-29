@@ -7,14 +7,9 @@ const { protect } = require('../middleware/authMiddleware')
 
 
 
-// @desc    Register user
-// @access  Public
-// <<<<<<< HEAD
-router.post('/send-otp', userController.sendOTP)
-router.post('/login', userController.userLogin)
-router.post('/verify-otp', userController.verifyOTP)
-router.put('/edit-profile', protect, userController.editProfile)
-// =======
+
+
+
 router.post('/send-otp',userController.sendOTP)
 router.post('/login',userController.userLogin)
 router.post('/verify-otp',userController.verifyOTP)
@@ -28,9 +23,7 @@ router.post("/follow/:followeeId", protect,userController.followUser)
 
 router.put("/unfollow/:unfolloweeId", protect,userController.unFollowUser)
 
-// <<<<<<< HEAD
-module.exports = router
-// =======
+
 router.get('/fetch-following',protect,userController.getFollowing)
 
 router.get('/fetch-followers',protect,userController.getFollowers)
@@ -44,6 +37,11 @@ router.get('/get-request',protect,userController.getAllRequest)
 router.put('/accept-request/:requestId',protect,userController.acceptRequest)
 
 router.put('/reject-request/:requestId',protect,userController.rejectRequest)
+
+
+router.post('/payment/create',protect,userController.createPayment)
+
+router.post('/payment/success',protect,userController.userVerification)
 
 module.exports=router
 // >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e

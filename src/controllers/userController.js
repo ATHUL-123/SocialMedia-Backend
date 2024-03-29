@@ -18,6 +18,7 @@ const userLogin = async(req,res)=>{
         res.status(500).send(err);
       })
     } catch (error) {
+    
         res.status(500).send(error);
     }
 
@@ -106,9 +107,9 @@ const googleLogin =async (req,res)=>{
 
 const fetchUsers = async(req,res)=>{
   try {
-    const {page,limit} =req.query
+    const {page,limit,searchQuery} =req.query
     const userId = req.user.id
-    userHelper.fetchUsersHelp(userId,page,limit)
+    userHelper.fetchUsersHelp(userId,page,limit,searchQuery)
     .then((response) => {
     
       res.status(200).json(response);
@@ -276,6 +277,40 @@ const rejectRequest =(req,res)=>{
   }
 }
 
+const createPayment =(req,res)=>{
+  try {
+   
+ 
+  
+    userHelper.createPayment()
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+
+const userVerification =(req,res)=>{
+  try {
+   
+    const userId = req.user.id
+  
+    userHelper.successPayment(userId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
 
 module.exports={
  
@@ -293,6 +328,8 @@ module.exports={
     getFollowers,
     getAllRequest,
     acceptRequest,
-    rejectRequest
+    rejectRequest,
+    createPayment,
+    userVerification
 
 }

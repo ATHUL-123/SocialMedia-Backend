@@ -208,7 +208,7 @@ const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
             const followeesPosts = [];
 
             for (const followeeId of followees) {
-                const posts = await Post.find({ userId: followeeId })
+                const posts = await Post.find({ userId: followeeId,blocked:false})
                 .populate('userId')
                 .populate('likes')
                 for (const post of posts) {
@@ -324,10 +324,10 @@ const unLikePost = async (userId, postId) => {
     });
 };
 
-const reportPost = async ({reporterId, reporterUsername, reportType, targetId}) => {
+const reportPost = async ({ reporterId, reporterUsername, reportType, targetId }) => {
     return new Promise(async (resolve, reject) => {
         try {
-           console.log(targetId);
+            console.log(targetId);
             // Check if the post exists
             const post = await Post.findById(targetId);
             if (!post) {
@@ -338,6 +338,9 @@ const reportPost = async ({reporterId, reporterUsername, reportType, targetId}) 
                 });
                 return;
             }
+
+            // Count the number of reports for the given targetId
+            const reportCount = await Report.countDocuments({ targetId: targetId });
 
             // Create a new report object
             const newReport = new Report({
@@ -350,10 +353,22 @@ const reportPost = async ({reporterId, reporterUsername, reportType, targetId}) 
             // Save the report
             await newReport.save();
 
-            resolve({
-                message: 'Post reported successfully',
-                status: 200,
-            });
+            // Check if the report count exceeds 9
+            if (reportCount + 1 > 4) { // Adding 1 for the newly added report
+                post.blocked = true;
+                // Save the updated post
+                 await post.save();
+            
+                resolve({
+                    message: 'Post reported successfully and blocked due to excessive reports',
+                    status: 200,
+                });
+            } else {
+                resolve({
+                    message: 'Post reported successfully',
+                    status: 200,
+                });
+            }
         } catch (error) {
             console.log(error);
             reject({
@@ -364,6 +379,8 @@ const reportPost = async ({reporterId, reporterUsername, reportType, targetId}) 
         }
     });
 };
+
+
 
 
 const addComment = async ({userId,userName,postId,content}) => {
@@ -407,16 +424,97 @@ const addComment = async ({userId,userName,postId,content}) => {
     });
 };
 
-const getAllComments = (postId) => {
+const replyComment = async ( parentId,{ userId, userName, postId, content }) => {
     return new Promise(async (resolve, reject) => {
         try {
-            // Find all comments with the given postId
-            const comments = await Comment.find({ postId }).populate('userId');
+            // Check if the parent comment exists
+            const parentComment = await Comment.findById(parentId);
+            if (!parentComment) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Parent comment not found',
+                    status: 404,
+                });
+                return;
+            }
 
-            // Resolve with comments
+            // Check if the post exists
+            const post = await Post.findById(postId);
+            if (!post) {
+                reject({
+                    error_code: 'NOT_FOUND',
+                    message: 'Post not found',
+                    status: 404,
+                });
+                return;
+            }
+
+            // Create a new reply comment object
+            const newReply = new Comment({
+                userId,
+                userName,
+                postId,
+                content,
+                parentId,
+            });
+
+            // Save the reply comment
+            await newReply.save();
+
             resolve({
-                comments,
-                message: 'Comments retrieved successfully',
+                message: 'Reply added successfully',
+                status: 200,
+            });
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+const fetchReplies = (parentId) => {
+    return new Promise(async (resolve, reject) => {
+      try {
+        // Find all comments with the given parent ID
+        const replies = await Comment.find({ parentId }).populate('userId')
+  
+        // Return the fetched replies
+        resolve({
+          replies,
+          message: 'Replies fetched successfully',
+          status: 200,
+        });
+      } catch (error) {
+        console.error(error);
+        reject({
+          error_code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong while fetching replies',
+          status: 500,
+        });
+      }
+    });
+  };
+  
+  const getAllComments = (postId) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            // Find all comments with the given postId and no parentId
+            const comments = await Comment.find({ postId, parentId: { $exists: false } }).populate('userId');
+
+            // Get the count of replies for each top-level comment
+            const commentsWithRepliesCount = await Promise.all(comments.map(async (comment) => {
+                const repliesCount = await Comment.countDocuments({ parentId: comment._id });
+                return { ...comment.toObject(), repliesCount };
+            }));
+
+            // Resolve with top-level comments and their replies count
+            resolve({
+                comments: commentsWithRepliesCount,
+                message: 'Top-level comments retrieved successfully',
                 status: 200,
             });
         } catch (error) {
@@ -430,6 +528,8 @@ const getAllComments = (postId) => {
         }
     });
 };
+
+
 
 const deleteComment = (commentId) => {
     return new Promise((resolve, reject) => {
@@ -464,6 +564,7 @@ const deleteComment = (commentId) => {
 
 
 
+
 module.exports = {
     addPost,
     getAllPosts,
@@ -476,5 +577,7 @@ module.exports = {
     reportPost,
     addComment,
     getAllComments,
-    deleteComment
+    deleteComment,
+    replyComment,
+    fetchReplies
 }
