@@ -12,6 +12,31 @@ require("dotenv").config();
 
 
 
+//flutter...............
+const logginedUser = (userId) => {
+  return new Promise(async(resolve, reject) => {
+    try {
+     const user=await User.findById(userId)
+
+       if(user){
+        resolve(user)
+       }else{
+        reject({
+          status: 404,
+          error_code: "DB_FETCH_ERROR",
+          message: "User not found.",
+        })
+       }
+    } catch (error) {
+      reject({
+        status: 500,
+        error_code: "INTERNAL_SERVER_ERROR",
+        message: "Something went wrong please try after sometime.",
+      });
+    }
+  });
+};
+
 
 // @desc    Sent verification link
 // @route   GET /auth/sent-verification
@@ -773,7 +798,8 @@ module.exports = {
   acceptRequest,
   rejectRequest,
   createPayment,
-  successPayment
+  successPayment,
+  logginedUser
 }
 
 

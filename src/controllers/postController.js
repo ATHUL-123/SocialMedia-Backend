@@ -241,6 +241,37 @@ const deleteComment = async(req,res)=>{
 }
 }
 
+
+const searchPost = async(req,res)=>{
+  try {
+    const {searchQuery} = req.query
+    postHelper.searchPostsByTags(searchQuery)
+    .then((response) => {
+      res.status(200).send(response);
+    })
+    .catch((error) => {
+      res.status(500).send(error);
+    });
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const explorePost = async(req,res)=>{
+  try{
+    const {page,pageSize} = req.query
+  postHelper.explorePost(page,pageSize)
+  .then((response) => {
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
 module.exports={
     addUserPost,
     getallpost,
@@ -255,5 +286,7 @@ module.exports={
     getAllComments,
     deleteComment,
     replyComment,
-    fetchReplies
+    fetchReplies,
+    searchPost,
+    explorePost
 }

@@ -8,7 +8,8 @@ const { protect } = require('../middleware/authMiddleware')
 
 
 
-
+//flutter...
+router.get('/getuser',protect,userController.loginnedUser)
 
 router.post('/send-otp',userController.sendOTP)
 router.post('/login',userController.userLogin)

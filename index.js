@@ -1,52 +1,63 @@
-const express = require('express')
-const dotenv = require('dotenv')
-const app = express()
+const express = require('express');
+const dotenv = require('dotenv');
+const http = require('http');
+const socketIo = require('socket.io');
 const connect = require('./src/config/mongoose');
 const bodyParser = require('body-parser');
-const cors = require('cors')
+const cors = require('cors');
+const socketIo_Config = require('./src/services/socketIo'); // Import socketIo_Config
 
+// Importing Routes
+const userRouter = require('./src/routes/userRouter');
+const postRouter = require('./src/routes/postRouter');
+const adminRouter = require('./src/routes/adminRouter');
+const chatRouter = require('./src/routes/chatRouter');
 
-//importing Routes
-const userRouter = require('./src/routes/userRouter')
-const postRouter = require('./src/routes/postRouter')
-const adminRouter= require('./src/routes/adminRouter')
-app.use(cors());
-
-
-
-//dotenv configuration
+// dotenv configuration
 dotenv.config();
 
-//mongoDB configuration
-connect()
+// MongoDB configuration
+connect();
 
+// Create Express app
+const app = express();
 
+// Apply middleware
+app.use(cors({
+  origin: '*',
+  methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+  allowedHeaders: 'Content-Type,Authorization',
+  credentials: true
+}));
 
-
-
-
-
-//middlewares
 app.use(express.json());
-app.use(express.urlencoded({extended:true}));
+app.use(express.urlencoded({ extended: true }));
+
+// Create HTTP server
+const server = http.createServer(app);
 
 
+// Initialize Socket.IO with the HTTP server
+const io = socketIo(server, {
+  cors: {
+    origin: "*", // Allow requests from any origin
+    methods: ["GET", "POST"] // Allow only GET and POST requests
+  }
+});
 
-  // Apply the middleware to the userRouter path
-  app.use("/api/users",userRouter);
-  app.use("/api/posts",postRouter);
-  app.use("/api/admin",adminRouter)
+// Configure Socket.IO
+socketIo_Config(io);
 
+// Apply routes
+app.use("/api/users", userRouter);
+app.use("/api/posts", postRouter);
+app.use("/api/admin", adminRouter);
+app.use("/api/chats", chatRouter);
 
+// Define the listening port
+const port = process.env.LISTENING_PORT || 7003;
 
-
-
-
-
-const port = process.env.LISTENING_PORT || 7003; // Change port number here
-
-
-app.listen(port,()=>{
-    console.log(`the server is listening on: `,`http://localhost:${port}`);
-})
-
+// Start the server
+server.listen(port, () => {
+    console.log(`The server is listening on: http://localhost:${port}`);
+});

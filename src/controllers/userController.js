@@ -4,6 +4,25 @@ const asyncHandler = require('express-async-handler')
 
 
 
+//flutter...............
+const loginnedUser= async(req,res)=>{
+  try {
+ 
+    const userId = req.user.id
+  userHelper.logginedUser(userId)
+      .then((response)=>{
+        res.status(200).json(response)
+      })
+      .catch((err)=>{
+        res.status(500).send(err);
+      })
+    } catch (error) {
+    
+        res.status(500).send(error);
+    }
+
+  }
+
 const userLogin = async(req,res)=>{
   try {
     console.log('haaai');
@@ -330,6 +349,7 @@ module.exports={
     acceptRequest,
     rejectRequest,
     createPayment,
-    userVerification
+    userVerification,
+    loginnedUser
 
 }

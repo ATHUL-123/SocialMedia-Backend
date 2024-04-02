@@ -45,6 +45,11 @@ const postSchema = new Schema({
     type: Boolean,
     default: false,
   },
+  tags: {
+    type: [String] ,
+    default:[]
+  }
+
 
 
 },{

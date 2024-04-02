@@ -2,21 +2,23 @@ const Post = require('../models/postModel');
 const Connection = require('../models/connectionModel');
 const User = require('../models/userModel')
 const Report = require('../models/reportsModel')
-const Comment = require('../models/commentModel')
+const Comment = require('../models/commentModel');
+
 
 
 
 // @desc    Add New Post
 // @route   POST /posts/addpost
 // @access  Private
-const addPost = async ({ imageUrl, description, userId }) => {
+const addPost = async ({ imageUrl, description,tags, userId }) => {
     return new Promise(async (resolve, reject) => {
         try {
             // Create a new post object
             const newPost = new Post({
                 image: imageUrl,
                 description: description,
-                userId: userId
+                userId: userId,
+                tags:tags
             });
 
             // Save the new post to the database
@@ -34,6 +36,34 @@ const addPost = async ({ imageUrl, description, userId }) => {
                         status: 500,
                     });
                 });
+        } catch (error) {
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+// @desc    Search Posts by Tags
+// @route   GET /posts/search
+// @access  Private
+const searchPostsByTags = async (searchQuery) => {
+    return new Promise(async (resolve, reject) => {
+        try {
+            console.log('searching...',searchQuery);
+            // Use regex to search for posts with tags matching the search query
+            const posts = await Post.find({ tags: { $in: [new RegExp(searchQuery, 'i')] } })
+  .populate('userId')
+  .sort({ createdAt: -1 }); // Sort by createdAt timestamp in descending order
+
+     
+            resolve({
+                status: 200,
+                message: 'Posts fetched successfully',
+                data: posts,
+            });
         } catch (error) {
             reject({
                 error_code: 'INTERNAL_SERVER_ERROR',
@@ -117,6 +147,7 @@ const updatePost = async (postId, data) => {
             // Update the post fields
             post.image = data.imageUrl;
             post.description = data.description;
+            post.tags=data.tags
 
             // Save the updated post to the database
             post.save()
@@ -206,20 +237,21 @@ const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
             // Step 2: Retrieve posts of each followee
             const followees = userConnection.following;
             const followeesPosts = [];
-
-            for (const followeeId of followees) {
+            console.log(followees);
+                for (const followeeId of followees) {
                 const posts = await Post.find({ userId: followeeId,blocked:false})
                 .populate('userId')
                 .populate('likes')
+               
                 for (const post of posts) {
                     const isLiked = checkIfPostIsLiked(post, userId); // Add the isLiked field based on some condition
                     const postObject = post.toObject(); // Convert Mongoose document to plain JavaScript object
                     postObject.isLiked = isLiked;
                     followeesPosts.push(postObject); // Push the modified post object into followeesPosts
                 }
-            }
+            }       
             
-
+        
             // Now followeesPosts contains all posts with the isLiked field added
 
 
@@ -562,6 +594,34 @@ const deleteComment = (commentId) => {
     });
 };
 
+const explorePost = (page = 1, pageSize = 10) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            // Step 1: Find all unblocked posts
+           const posts = await Post.find({ blocked: false }).populate('userId')
+
+                // Step 2: Get total count of unblocked posts
+                const totalCount = posts.length;
+
+                // Step 3: Apply pagination
+                const startIndex = (page - 1) * pageSize;
+                const endIndex = page * pageSize;
+                const paginatedPosts = posts.slice(startIndex, endIndex);
+
+                resolve(paginatedPosts);
+            
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+
 
 
 
@@ -579,5 +639,7 @@ module.exports = {
     getAllComments,
     deleteComment,
     replyComment,
-    fetchReplies
+    fetchReplies,
+    searchPostsByTags,
+    explorePost
 }
