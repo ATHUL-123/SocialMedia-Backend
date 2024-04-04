@@ -30,6 +30,7 @@ const addPost = async ({ imageUrl, description,tags, userId }) => {
                     });
                 })
                 .catch((error) => {
+                    console.log(error);
                     reject({
                         error_code: 'DB_SAVE_ERROR',
                         message: 'Something went wrong while saving to the database',
@@ -37,6 +38,7 @@ const addPost = async ({ imageUrl, description,tags, userId }) => {
                     });
                 });
         } catch (error) {
+            console.log(error);
             reject({
                 error_code: 'INTERNAL_SERVER_ERROR',
                 message: 'Something went wrong on the server',
@@ -385,8 +387,8 @@ const reportPost = async ({ reporterId, reporterUsername, reportType, targetId }
             // Save the report
             await newReport.save();
 
-            // Check if the report count exceeds 9
-            if (reportCount + 1 > 4) { // Adding 1 for the newly added report
+            // Check if the report count exceeds 4
+            if (reportCount + 1 > 4) { 
                 post.blocked = true;
                 // Save the updated post
                  await post.save();

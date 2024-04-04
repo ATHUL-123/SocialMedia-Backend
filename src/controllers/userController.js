@@ -331,6 +331,23 @@ const userVerification =(req,res)=>{
   }
 }
 
+const removeVerify =(req,res)=>{
+  try {
+   
+    const userId = req.user.id
+  
+    userHelper.removeVerify(userId)
+    .then((response)=>{
+      res.status(200).send(response);
+    })
+    .catch((error)=>{
+     res.status(500).send(error)
+    })
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
 module.exports={
  
     sendOTP,
@@ -350,6 +367,7 @@ module.exports={
     rejectRequest,
     createPayment,
     userVerification,
-    loginnedUser
+    loginnedUser,
+    removeVerify
 
 }

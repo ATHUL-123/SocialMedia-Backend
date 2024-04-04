@@ -46,6 +46,23 @@ const socketIo_Config = (io) => {
                 // Handle the case when user is not found
             }
         })
+        
+        // Listen for "typing" event from client
+socket.on("typing", ({ senderId, recieverId }) => {
+    const user = getUser(recieverId);
+    if (user) {
+        io.to(user.socketId).emit("userTyping", { senderId });
+    }
+});
+
+// Listen for "stopTyping" event from client
+socket.on("stopTyping", ({ senderId, recieverId }) => {
+    const user = getUser(recieverId);
+    if (user) {
+        io.to(user.socketId).emit("userStopTyping", { senderId });
+    }
+});
+
  
         
     });

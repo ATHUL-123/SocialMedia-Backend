@@ -18,7 +18,7 @@ const postSchema = new Schema({
   description: {
     type: String,
     trim: true,
-    maxLength: 100,
+   
   },
 
   date: {

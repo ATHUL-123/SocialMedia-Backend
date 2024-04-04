@@ -779,6 +779,24 @@ const successPayment = (userId) => {
   });
 };
 
+const removeVerify = (userId) => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      const updatedUser = await User.findByIdAndUpdate(userId, { verified: false });
+
+      if (!updatedUser) {
+        throw new Error("Failed to update user's verified status");
+      }
+
+      console.log('Verification removed successfully', updatedUser);
+      resolve(updatedUser);
+    } catch (error) {
+      console.error("Error in removeVerify:", error);
+      reject(error);
+    }
+  });
+};
+
 
 
 module.exports = {
@@ -799,7 +817,8 @@ module.exports = {
   rejectRequest,
   createPayment,
   successPayment,
-  logginedUser
+  logginedUser,
+  removeVerify
 }
 
 

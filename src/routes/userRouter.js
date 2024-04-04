@@ -44,5 +44,7 @@ router.post('/payment/create',protect,userController.createPayment)
 
 router.post('/payment/success',protect,userController.userVerification)
 
+router.patch('/remove-verify',protect,userController.removeVerify)
+
 module.exports=router
 // >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e
