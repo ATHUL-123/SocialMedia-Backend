@@ -31,9 +31,12 @@ const addPost = async ({ imageUrl, description,tags, userId,taggedUsers }) => {
             newPost.save()
                 .then(async(response) => {
                     const user = await User.findById(userId)
-                    taggedUsers.forEach(tagId=> {
-                        setNotification(tagId,userId,user.userName,'tagged you in a post',newPost._id)
-                    });
+                    if(taggedUsers){
+                        taggedUsers.forEach(tagId=> {
+                            setNotification(tagId,userId,user.userName,'tagged you in a post',newPost._id)
+                        });
+                    }
+                   
                     resolve({
                         status: 201,
                         message: 'Post created successfully',

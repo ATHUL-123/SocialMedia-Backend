@@ -898,7 +898,7 @@ const kycPost = async (userId, data) => {
 
 const isKycSubmitted = async(userId)=>{
   try {
-    const kyc = KYC.findOne({userId:userId})
+    const kyc =await KYC.findOne({userId:userId})
     return !!kyc
   } catch (error) {
      // Handle any errors that occur during the process
