@@ -1,7 +1,7 @@
 const { response } = require('express');
 const userHelper = require('../helpers/userHelper')
 const asyncHandler = require('express-async-handler')
-
+const {setNotification} = require('../utils/noficationSetter')
 
 
 //flutter...............
@@ -348,6 +348,77 @@ const removeVerify =(req,res)=>{
   }
 }
 
+const isFollowing =async (req,res)=>{
+  try {
+    
+    const ownId = req.user.id;
+    const {userId} = req.params
+  
+   const response = await userHelper.isFollowing(ownId,userId);
+
+   res.status(200).send(response)
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+
+}
+
+const getAllNotification =async (req,res)=>{
+  try {
+    
+    const userId = req.user.id;
+    
+  
+   const response = await userHelper.getAllNotifications(userId);
+
+   res.status(200).send(response)
+    
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+
+}
+
+const searchAllUsers = async(req,res)=>{
+  try {
+    const userId = req.user.id;
+    const {searchQuery} = req.query
+    const response = await userHelper.fetchUsersBySearchQuery(searchQuery)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
+
+const kycPost = async(req,res)=>{
+  try {
+    const userId = req.user.id;
+    const data   =req.body
+    console.log('data',data);
+    const response = await userHelper.kycPost(userId,data)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
+
+const isKycSubmitted = async(req,res)=>{
+  try {
+    const userId = req.user.id;
+   
+
+    const response = await userHelper.isKycSubmitted(userId)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
 module.exports={
  
     sendOTP,
@@ -368,6 +439,11 @@ module.exports={
     createPayment,
     userVerification,
     loginnedUser,
-    removeVerify
+    removeVerify,
+    getAllNotification,
+    isFollowing,
+    searchAllUsers,
+    kycPost,
+    isKycSubmitted
 
 }

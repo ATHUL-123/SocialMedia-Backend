@@ -3,27 +3,37 @@ const Connection = require('../models/connectionModel');
 const User = require('../models/userModel')
 const Report = require('../models/reportsModel')
 const Comment = require('../models/commentModel');
-
-
+const {setNotification} = require('../utils/noficationSetter')
+const mongoose = require('mongoose'); 
+const Saved = require('../models/savedPostModal')
 
 
 // @desc    Add New Post
 // @route   POST /posts/addpost
 // @access  Private
-const addPost = async ({ imageUrl, description,tags, userId }) => {
+const addPost = async ({ imageUrl, description,tags, userId,taggedUsers }) => {
     return new Promise(async (resolve, reject) => {
         try {
+            
             // Create a new post object
             const newPost = new Post({
                 image: imageUrl,
                 description: description,
                 userId: userId,
-                tags:tags
+                tags:tags,
+                taggedUsers:taggedUsers,
+               
             });
+
+            
 
             // Save the new post to the database
             newPost.save()
-                .then((response) => {
+                .then(async(response) => {
+                    const user = await User.findById(userId)
+                    taggedUsers.forEach(tagId=> {
+                        setNotification(tagId,userId,user.userName,'tagged you in a post',newPost._id)
+                    });
                     resolve({
                         status: 201,
                         message: 'Post created successfully',
@@ -56,7 +66,7 @@ const searchPostsByTags = async (searchQuery) => {
         try {
             console.log('searching...',searchQuery);
             // Use regex to search for posts with tags matching the search query
-            const posts = await Post.find({ tags: { $in: [new RegExp(searchQuery, 'i')] } })
+            const posts = await Post.find({ tags: { $in: [new RegExp(searchQuery, 'i')] },hidden:false,blocked:false })
   .populate('userId')
   .sort({ createdAt: -1 }); // Sort by createdAt timestamp in descending order
 
@@ -82,7 +92,8 @@ const getAllPosts = async (userId) => {
         try {
 
             // Fetch all posts from the database
-            const posts = await Post.find({ userId: userId }).populate('userId')
+            const posts = await Post.find({ userId: userId ,hidden:false }).populate('userId')
+                          .sort({ createdAt: -1 });
             resolve(posts);
 
         } catch (error) {
@@ -103,7 +114,7 @@ const getAllPosts = async (userId) => {
 const deletePost = (postId) => {
     return new Promise((resolve, reject) => {
         try {
-            Post.deleteOne({ _id: postId })
+            Post.updateOne({ _id: postId }, { hidden: true })
                 .then((response) => {
                     resolve(response);
                     console.log(response);
@@ -111,7 +122,7 @@ const deletePost = (postId) => {
                 .catch((err) => {
                     reject({
                         status: 500,
-                        error_code: "DB_FETCH_ERROR",
+                        error_code: "DB_UPDATE_ERROR",
                         message: err.message,
                         err,
                     });
@@ -195,7 +206,7 @@ const getPostByUserId = async (userId) => {
 
 
             // Find posts by user ID and populate user details
-            const posts = await Post.find({ userId: userId }).populate('userId');
+            const posts = await Post.find({ userId: userId ,blocked:false,hidden:false}).populate('userId') .sort({ createdAt: -1 });;
             console.log(posts);
             resolve(posts);
         } catch (error) {
@@ -222,6 +233,16 @@ const checkIfPostIsLiked = (post, userId) => {
     return post.likes.some(likeId => likeId.equals(userIdObject)); // Check if any likeId equals userIdObject
 };
 
+const checkIfPostisSaved = async (postId, userId) => {
+    const { Types } = require('mongoose');
+
+    const userIdObject = new Types.ObjectId(userId);
+
+    const saved = await Saved.findOne({ userId: userIdObject, postId: postId });
+
+    return !!saved; // Converts saved to a boolean value
+}
+
 
 
 
@@ -241,15 +262,26 @@ const getAllFolloweesPost = async (userId, page = 1, pageSize = 10) => {
             const followeesPosts = [];
             console.log(followees);
                 for (const followeeId of followees) {
-                const posts = await Post.find({ userId: followeeId,blocked:false})
+                const posts = await Post.find({ userId: followeeId,blocked:false,hidden:false})
                 .populate('userId')
                 .populate('likes')
-               
+                .populate({
+                    path: 'taggedUsers',
+                    select: '_id userName', // You can select specific fields from the postId object if needed
+                    options: { // Conditionally populate postId only if it exists
+                        skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+                    }
+                }).sort({ createdAt: -1 });
+                
+              
                 for (const post of posts) {
                     const isLiked = checkIfPostIsLiked(post, userId); // Add the isLiked field based on some condition
+                    const isSaved = await checkIfPostisSaved(post._id,userId)
                     const postObject = post.toObject(); // Convert Mongoose document to plain JavaScript object
                     postObject.isLiked = isLiked;
-                    followeesPosts.push(postObject); // Push the modified post object into followeesPosts
+                    postObject.isSaved = isSaved;
+                    followeesPosts.push(postObject); 
+                    
                 }
             }       
             
@@ -300,6 +332,10 @@ const likePost = async (userId, postId) => {
             // Update the likes array
             post.likes.push(userId);
             await post.save();
+            //notification
+            const user = await User.findById(userId) 
+            setNotification(post.userId,userId,user.userName,'liked your post',postId)
+       
             resolve({
                 message: 'Post liked successfully',
                 status: 200,
@@ -443,7 +479,11 @@ const addComment = async ({userId,userName,postId,content}) => {
             // Save the report
             await newComment.save();
 
+            //notification
+            setNotification(post.userId,userId,userName,'commented on your post',postId)
+
             resolve({
+                commentId:newComment._id,
                 message: 'Comment added successfully',
                 status: 200,
             });
@@ -600,7 +640,16 @@ const explorePost = (page = 1, pageSize = 10) => {
     return new Promise(async(resolve, reject) => {
         try {
             // Step 1: Find all unblocked posts
-           const posts = await Post.find({ blocked: false }).populate('userId')
+           const posts = await Post.find({ blocked: false,hidden:false })
+           .populate('userId')
+           .populate({
+            path: 'taggedUsers',
+            select: '_id userName', // You can select specific fields from the postId object if needed
+            options: { // Conditionally populate postId only if it exists
+                skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+            }
+        }) 
+           .sort({ createdAt: -1 });
 
                 // Step 2: Get total count of unblocked posts
                 const totalCount = posts.length;
@@ -623,6 +672,98 @@ const explorePost = (page = 1, pageSize = 10) => {
     });
 };
 
+const getCommentCountForPost = async (postId) => {
+    try {
+        // Get the comment count
+        const commentCount = await Comment.countDocuments({ postId });
+
+        // Find the post by postId
+        const post = await Post.findById(postId);
+
+        // If the post doesn't exist, throw an error
+        if (!post) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'Post not found',
+                status: 404,
+            };
+        }
+
+        // Get the number of likes for the post
+        const likeCount = post.likes.length;
+
+        // Return an object containing postId, commentCount, and likeCount
+        return {
+            postId,
+            commentCount,
+            likeCount,
+        };
+    } catch (error) {
+        // Log any errors and throw an internal server error
+        console.error(error);
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+};
+
+
+const savePost = async (postId, userId) => {
+    try {
+        // Create a new Saved document
+        const savedPost = new Saved({
+            userId,
+            postId // Corrected to postId from PostId
+        });
+
+        
+        const savedResult = await savedPost.save();
+
+       
+        return savedResult;
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+};
+
+
+const fetchSavedPost = async(userId)=>{
+    try {
+
+        const savedPost = await Saved.find({userId})
+                          .populate('userId')
+                          .populate('postId')
+                          .sort({createdAt:-1})
+                          console.log(savedPost);
+        return  savedPost;
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+}
+
+const removeSaved = async(savedId)=>{
+    try {
+        const response = await Saved.findByIdAndDelete(savedId)
+        return response
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+}
+
 
 
 
@@ -643,5 +784,9 @@ module.exports = {
     replyComment,
     fetchReplies,
     searchPostsByTags,
-    explorePost
+    explorePost,
+    getCommentCountForPost,
+    savePost,
+    fetchSavedPost,
+    removeSaved
 }

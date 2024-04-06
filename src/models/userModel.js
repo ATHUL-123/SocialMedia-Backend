@@ -17,8 +17,6 @@ const userSchema = new Schema({
   name:{
     type: String,
     trim: true,
-    minlength: 4,
-    maxlength: 30,
   },
   email: {
     type: String,
@@ -72,6 +70,10 @@ const userSchema = new Schema({
   isPrivate:{
     type:Boolean,
     default:false
+  },
+  backGroundImage:{
+    type: String,
+    trim: true,
   }
  
 },{

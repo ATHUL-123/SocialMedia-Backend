@@ -48,6 +48,15 @@ const postSchema = new Schema({
   tags: {
     type: [String] ,
     default:[]
+  },
+  taggedUsers:{
+    type: [
+      {
+        type: Schema.Types.ObjectId,
+        ref: "user",
+      },
+    ],
+    default: [],
   }
 
 

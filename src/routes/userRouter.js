@@ -25,6 +25,8 @@ router.post("/follow/:followeeId", protect,userController.followUser)
 router.put("/unfollow/:unfolloweeId", protect,userController.unFollowUser)
 
 
+router.get('/isFollowing/:userId',protect,userController.isFollowing)
+
 router.get('/fetch-following',protect,userController.getFollowing)
 
 router.get('/fetch-followers',protect,userController.getFollowers)
@@ -45,6 +47,15 @@ router.post('/payment/create',protect,userController.createPayment)
 router.post('/payment/success',protect,userController.userVerification)
 
 router.patch('/remove-verify',protect,userController.removeVerify)
+
+router.get('/notifications',protect,userController.getAllNotification)
+
+router.get('/searchallusers',protect,userController.searchAllUsers)
+
+
+router.post('/kyc',protect,userController.kycPost)
+
+router.get('/isKyc',protect,userController.isKycSubmitted)
 
 module.exports=router
 // >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e

@@ -38,4 +38,14 @@ router.get('/fetch-replies/:commentId',postController.fetchReplies)
 router.get('/search-post',postController.searchPost)
 
 router.get('/explore-posts',postController.explorePost)
+
+router.get('/commentCount/:postId',postController.getCommentCount)
+
+router.post('/savePost/:postId',authMiddleware.protect,postController.savePost)
+
+router.get('/savePost',authMiddleware.protect,postController.fetchSavedPost)
+
+router.delete('/savePost/:savedId',authMiddleware.protect,postController.removeSavedPost)
+
+
 module.exports=router

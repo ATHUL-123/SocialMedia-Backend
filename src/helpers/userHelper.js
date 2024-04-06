@@ -9,6 +9,9 @@ const verifyOtp = require('../services/emailVerification')
 const Connection = require('../models/connectionModel')
 const Razorpay = require("razorpay");
 require("dotenv").config();
+const Notifications = require('../models/notificationModel')
+const {setNotification} = require('../utils/noficationSetter')
+const KYC = require('../models/kycModel')
 
 
 
@@ -214,7 +217,8 @@ const login = async (email, password) => {
         name: existingUser.name,
         blocked: existingUser.blocked,
         verified: existingUser.verified,
-        role: existingUser.role
+        role: existingUser.role,
+        backGroundImage:existingUser.backGroundImage
       }
 
       // If user and password match, resolve with the user data
@@ -254,7 +258,8 @@ const editProfileDetails = async (data, userId) => {
       user.name = data.name;
       user.profilePic = data.image;
       user.bio = data.bio;
-      console.log('asdfghjkl');
+      user.backGroundImage= data.backGroundImage
+     
       console.log(data.image);
       user.save()
         .then((updatedUser) => {
@@ -270,7 +275,8 @@ const editProfileDetails = async (data, userId) => {
             bio: updatedUser.bio,
             name: updatedUser.name,
             blocked: updatedUser.blocked,
-            verified: updatedUser.verified
+            verified: updatedUser.verified,
+           backGroundImage:updatedUser.backGroundImage
           }
 
           resolve({
@@ -347,6 +353,32 @@ const fetchUsersHelp = async (userId, page, limit,searchQuery ='') => {
     }
   });
 };
+
+const fetchUsersBySearchQuery = async (searchQuery = '') => {
+  return new Promise(async (resolve, reject) => {
+    try {
+      let users;
+      if (searchQuery) {
+        users = await User.find({
+          role: { $ne: 'Admin' },
+          userName: { $regex: searchQuery, $options: 'i' }
+        });
+      } else {
+        users = await User.find({ role: { $ne: 'Admin' } });
+      }
+
+      resolve(users);
+    } catch (error) {
+      reject({
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+        error: error.message
+      });
+    }
+  });
+};
+
   
 
 
@@ -410,7 +442,8 @@ const followHelper = async (userId, followeeId) => {
       { $addToSet: { followers: userId } },
       { upsert: true, new: true }
     );
-
+    const user = await User.findById(userId)
+    setNotification(followeeId,userId,user.userName,'started following you.')
     return { userConnection, followeeConnection };
   } catch (error) {
     console.error("Error in followHelper:", error.message);
@@ -797,6 +830,82 @@ const removeVerify = (userId) => {
   });
 };
 
+const isFollowing = async (userId, followeeId) => {
+  try {
+    // Find the connection for the user
+    const userConnection = await Connection.findOne({ userId: userId });
+    if (!userConnection) {
+      return false; // User's connection not found, meaning user is not following anyone
+    }
+
+    // Check if followeeId exists in the following list of userConnection
+    return userConnection.following.includes(followeeId);
+  } catch (error) {
+    console.error("Error in isFollowing:", error.message);
+    throw error; // Propagate the error
+  }
+};
+
+
+const getAllNotifications = async (userId) => {
+  if (!userId) {
+      throw new Error("User ID is required");
+  }
+
+  try {
+      const notifications = await Notifications.find({ userId })
+          .sort({ createdAt: -1 })
+          .populate('from')
+          .populate({
+              path: 'postId',
+              select: '_id image', // You can select specific fields from the postId object if needed
+              options: { // Conditionally populate postId only if it exists
+                  skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+              }
+          });
+
+      return notifications;
+  } catch (error) {
+      console.error("Error while getting notifications:", error);
+      throw error;
+  }
+};
+
+
+
+const kycPost = async (userId, data) => {
+  try {
+   
+    const kycData = new KYC({
+      fullName: data.fullName,
+      dateOfBirth: data.DOB,
+      gender: data.gender,
+      idProof: data.idProof,
+      userId :userId
+    });
+
+   
+    const savedKYC = await kycData.save();
+
+   
+    return savedKYC; 
+  } catch (error) {
+    // Handle any errors that occur during the process
+    console.error('Error saving KYC data:', error);
+    throw error; // Throw the error to be handled by the caller
+  }
+};
+
+const isKycSubmitted = async(userId)=>{
+  try {
+    const kyc = KYC.findOne({userId:userId})
+    return !!kyc
+  } catch (error) {
+     // Handle any errors that occur during the process
+     console.error('Error saving KYC data:', error);
+     throw error; // Throw the error to be handled by the caller
+  }
+}
 
 
 module.exports = {
@@ -818,7 +927,12 @@ module.exports = {
   createPayment,
   successPayment,
   logginedUser,
-  removeVerify
+  removeVerify,
+  getAllNotifications,
+  isFollowing,
+  fetchUsersBySearchQuery,
+  kycPost,
+  isKycSubmitted
 }
 
 

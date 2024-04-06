@@ -7,7 +7,7 @@ const postHelper = require('../helpers/postHelper')
 const addUserPost =async(req,res)=>{
     try {
         const postData= req.body;
-        
+     
    postHelper.addPost(postData)
       .then((response)=>{
         res.status(200).json({...response})
@@ -272,6 +272,82 @@ const explorePost = async(req,res)=>{
 }
 }
 
+const getCommentCount = async(req,res)=>{
+  try{
+  
+    const {postId} = req.params
+   
+  postHelper.getCommentCountForPost(postId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+
+const savePost= async(req,res)=>{
+  try{
+  
+    const {postId} = req.params
+    const userId = req.user.id
+   
+  postHelper.savePost(postId,userId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+
+const fetchSavedPost= async(req,res)=>{
+  try{
+  
+    const userId = req.user.id
+   
+  postHelper.fetchSavedPost(userId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+
+const removeSavedPost= async(req,res)=>{
+  try{
+  
+    const {savedId} = req.params
+    
+  postHelper.removeSaved(savedId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
 module.exports={
     addUserPost,
     getallpost,
@@ -288,5 +364,9 @@ module.exports={
     replyComment,
     fetchReplies,
     searchPost,
-    explorePost
+    explorePost,
+    getCommentCount,
+    savePost,
+    fetchSavedPost,
+    removeSavedPost
 }
