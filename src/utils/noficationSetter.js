@@ -1,7 +1,7 @@
 const Notifications = require('../models/notificationModel');
 
 // Function to set a new notification
-const setNotification = async (userId, from, fromUser, message,postId=null) => {
+const setNotification = async (userId, from, fromUser, message,type,postId=null) => {
     try {
         const notification = new Notifications({
             userId,
@@ -9,7 +9,8 @@ const setNotification = async (userId, from, fromUser, message,postId=null) => {
             from,
             fromUser,
             message,
-            isRead: false // Default value
+            isRead: false,
+            type
         });
         const savedNotification = await notification.save();
         return savedNotification;

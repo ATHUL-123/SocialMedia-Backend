@@ -443,7 +443,7 @@ const followHelper = async (userId, followeeId) => {
       { upsert: true, new: true }
     );
     const user = await User.findById(userId)
-    setNotification(followeeId,userId,user.userName,'started following you.')
+    setNotification(followeeId,userId,user.userName,'started following you.',type='follow')
     return { userConnection, followeeConnection };
   } catch (error) {
     console.error("Error in followHelper:", error.message);

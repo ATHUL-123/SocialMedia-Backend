@@ -33,7 +33,7 @@ const addPost = async ({ imageUrl, description,tags, userId,taggedUsers }) => {
                     const user = await User.findById(userId)
                     if(taggedUsers){
                         taggedUsers.forEach(tagId=> {
-                            setNotification(tagId,userId,user.userName,'tagged you in a post',newPost._id)
+                            setNotification(tagId,userId,user.userName,'tagged you in a post',type='tag',newPost._id)
                         });
                     }
                    
@@ -337,7 +337,7 @@ const likePost = async (userId, postId) => {
             await post.save();
             //notification
             const user = await User.findById(userId) 
-            setNotification(post.userId,userId,user.userName,'liked your post',postId)
+            setNotification(post.userId,userId,user.userName,'liked your post',type='like',postId)
        
             resolve({
                 message: 'Post liked successfully',
@@ -483,7 +483,7 @@ const addComment = async ({userId,userName,postId,content}) => {
             await newComment.save();
 
             //notification
-            setNotification(post.userId,userId,userName,'commented on your post',postId)
+            setNotification(post.userId,userId,userName,'commented on your post',type='comment',postId)
 
             resolve({
                 commentId:newComment._id,

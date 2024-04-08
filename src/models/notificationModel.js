@@ -32,6 +32,9 @@ const notificationSchema = new Schema({
         type: Boolean,
         required: true,
         default: false,
+    },
+    type:{
+     type:String
     }
 }, {
     timestamps: true,

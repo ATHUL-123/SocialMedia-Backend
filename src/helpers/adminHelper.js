@@ -4,7 +4,8 @@ const generateJwt = require('../services/jwt')
 const User = require('../models/userModel')
 const Reports = require('../models/reportsModel');
 const Post = require('../models/postModel');
-
+const KYC  = require('../models/kycModel')
+const {setNotification} = require('../utils/noficationSetter')
 // @desc    Login admin
 // @route   POST /admin/login
 // @access  Public
@@ -119,13 +120,109 @@ const takeAction = (targetId) => {
     });
 };
 
+const fetchAllKYC =async()=>{
+    try {
+     
+        const kycs = await KYC.find({}).populate('userId').sort({createdAt:-1})
+        return kycs
+    } catch (error) {
+        console.log(error);
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+}
 
+
+const rejectKYC = async (kycId, reason, adminId) => {
+    try {
+        console.log('jsadfsdfadsjjjdoadfsad',kycId,reason,adminId);
+        // Find the KYC record by ID
+        const kyc = await KYC.findById(kycId);
+        if (!kyc) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'KYC record not found',
+                status: 404,
+            };
+        }
+        // Find the user associated with the KYC record
+        const user = await User.findById(kyc.userId);
+        if (!user) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'User not found',
+                status: 404,
+            };
+        }
+        // Set notification for the user
+        await setNotification(user._id, adminId, 'Admin', `Rejected your Verification due to ${reason}`,type='reject');
+        // Delete the KYC record
+        await KYC.findByIdAndDelete(kycId);
+
+        return { success: true, message: 'KYC record rejected successfully' };
+
+    } catch (error) {
+        console.log(error);
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
+};
+
+const acceptKYC = async (kycId,adminId) => {
+    try {
+       
+        // Find the KYC record by ID
+        const kyc = await KYC.findById(kycId);
+        if (!kyc) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'KYC record not found',
+                status: 404,
+            };
+        }
+        // Find the user associated with the KYC record
+        const user = await User.findById(kyc.userId);
+        if (!user) {
+            throw {
+                error_code: 'NOT_FOUND',
+                message: 'User not found',
+                status: 404,
+            };
+        }
+        // Set notification for the user
+        await setNotification(user._id,adminId, 'Admin', 'Your verification has been accepted please pay the amount to complete.',type='accept');
+
+        return { success: true, message: 'KYC record accepted successfully' };
+    } catch (error) {
+        console.log(error);
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
+};
 
   
   module.exports = {
     adminLogin,
     block_Unblock_User,
     getAllReports,
-    takeAction
+    takeAction,
+    fetchAllKYC,
+    rejectKYC,
+    acceptKYC
   };
   

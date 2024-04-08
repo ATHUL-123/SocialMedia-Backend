@@ -74,6 +74,7 @@ const userSchema = new Schema({
   backGroundImage:{
     type: String,
     trim: true,
+    default:'https://img.freepik.com/free-photo/artistic-blurry-colorful-wallpaper-background_58702-8192.jpg?size=626&ext=jpg&ga=GA1.1.1700460183.1712361600&semt=ais'
   }
  
 },{

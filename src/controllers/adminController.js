@@ -90,10 +90,65 @@ const takeAction = async(req,res)=>{
   }
 }
 
+const fetchAllKYC = async(req,res)=>{
+  try {
+    
+    adminHelper.fetchAllKYC()
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const rejectKYC = async(req,res)=>{
+  try {
+    
+    const adminId = req.admin.id
+     const {kycId,reason} = req.params
+    adminHelper.rejectKYC(kycId,reason,adminId)
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+}
+
+const acceptKYC = async(req,res)=>{
+  try {
+    
+    const adminId = req.admin.id
+     const {kycId} = req.params
+    adminHelper.acceptKYC(kycId,adminId)
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+}
+
+
 module.exports={
     adminLogin,
     getAllUsers,
     userStatusToggle,
     getAllReports,
-    takeAction
+    takeAction,
+    fetchAllKYC,
+    rejectKYC,
+    acceptKYC
 }

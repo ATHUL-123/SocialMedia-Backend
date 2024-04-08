@@ -17,4 +17,10 @@ router.get('/get-reports',adminController.getAllReports)
 
 router.put('/take-action',adminController.takeAction)
 
+router.get('/fetch-kyc',adminController.fetchAllKYC)
+
+router.delete('/reject-kyc/:kycId/:reason',protect,adminController.rejectKYC)
+
+router.patch('/accept-kyc/:kycId',protect,adminController.acceptKYC)
+
 module.exports=router
