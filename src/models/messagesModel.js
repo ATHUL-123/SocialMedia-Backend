@@ -18,6 +18,10 @@ const messageSchema = new Schema({
     text: {
         type: String,
         trim: true,
+    },
+    isRead:{
+        type:Boolean,
+        default:false,
     }
 
 },{

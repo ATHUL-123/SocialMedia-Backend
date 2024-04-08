@@ -127,13 +127,36 @@ const getAllMessages = (conversationId) => {
     });
 };
 
+const messageReaded = async (conversationId, readerId) => {
+    try {
+        console.log(conversationId, readerId);
+        // Update messages' isRead field where senderId is not equal to readerId
+        const result = await Message.updateMany(
+            { conversationId: conversationId, senderId: { $ne: readerId } },
+            { $set: { isRead: true } }
+        );
+
+        console.log('Messages marked as read successfully');
+
+        // Fetch the updated messages
+        const messages = await Message.find({ conversationId: conversationId });
+
+        return {
+            data: messages,
+            status: 200,
+            message: 'Messages marked as read successfully'
+        };
+    } catch (error) {
+        throw error;
+    }
+};
 
 
 module.exports ={ 
     addConversation,
     getAllConversationsByUserId,
     addMessage,
-    getAllMessages
-
+    getAllMessages,
+    messageReaded
 
 }

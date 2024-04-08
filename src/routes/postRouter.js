@@ -39,6 +39,10 @@ router.get('/search-post',postController.searchPost)
 
 router.get('/explore-posts',postController.explorePost)
 
+//flutter explorePage.......
+router.get('/exploreposts',authMiddleware.protect,postController.explore_Post)
+
+
 router.get('/commentCount/:postId',postController.getCommentCount)
 
 router.post('/savePost/:postId',authMiddleware.protect,postController.savePost)

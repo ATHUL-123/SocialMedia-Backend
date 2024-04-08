@@ -639,6 +639,42 @@ const deleteComment = (commentId) => {
     });
 };
 
+
+
+const explore_Post = (userId) => {
+    return new Promise(async(resolve, reject) => {
+        try {
+            // Step 1: Find all unblocked posts
+           const posts = await Post.find({userId:{$ne:userId}, blocked: false,hidden:false })
+           .populate('userId')
+           .populate({
+            path: 'taggedUsers',
+            select: '_id userName', // You can select specific fields from the postId object if needed
+            options: { // Conditionally populate postId only if it exists
+                skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+            }
+        }) 
+           .sort({ createdAt: -1 });
+
+               
+
+                resolve(posts);
+            
+        } catch (error) {
+            console.log(error);
+            reject({
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            });
+        }
+    });
+};
+
+
+
+
+
 const explorePost = (page = 1, pageSize = 10) => {
     return new Promise(async(resolve, reject) => {
         try {
@@ -791,5 +827,6 @@ module.exports = {
     getCommentCountForPost,
     savePost,
     fetchSavedPost,
-    removeSaved
+    removeSaved,
+    explore_Post
 }

@@ -12,6 +12,8 @@ router.post('/message',chatController.addMessage)
 
 router.get('/message/:conversationId',chatController.getAllMessages)
 
+router.patch('/message/read/:conversationId/:readerId',chatController.messageReaded)
+
 
 
 

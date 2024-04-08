@@ -189,6 +189,9 @@ const acceptKYC = async (kycId,adminId) => {
                 status: 404,
             };
         }
+
+        kyc.actionTaken = true;
+        kyc.save()
         // Find the user associated with the KYC record
         const user = await User.findById(kyc.userId);
         if (!user) {

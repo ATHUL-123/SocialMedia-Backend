@@ -63,10 +63,25 @@ const createConversation = async(req,res)=>{
         res.status(500).send(error)
     }
   }
+  const messageReaded= async(req,res)=>{
+    try {
+       const {conversationId,readerId} = req.params
+      chatHelper.messageReaded(conversationId,readerId)
+      .then((response) => {
+        res.status(200).send(response);
+      })
+      .catch((error) => {
+        res.status(500).send(error);
+      });
+    } catch (error) {
+        res.status(500).send(error)
+    }
+  }
 
   module.exports={
     createConversation,
     getConversations,
     addMessage,
-    getAllMessages
+    getAllMessages,
+    messageReaded
   }

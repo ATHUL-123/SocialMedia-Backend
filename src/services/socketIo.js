@@ -1,3 +1,5 @@
+
+
 const socketIo_Config = (io) => {
     let users=[]
     io.on("connect", (socket) => {
@@ -63,6 +65,17 @@ socket.on("stopTyping", ({ senderId, recieverId }) => {
     }
 });
 
+
+
+socket.on("messageRead", ({ senderId }) => {
+    console.log('hahahahah...message readed');
+    // Update the message status in your database
+    // Emit an event to the sender that the message has been read
+    const senderSocket = users.find(user => user.userId === senderId);
+    if (senderSocket) {
+        io.to(senderSocket.socketId).emit("messageReadByRecipient");
+    }
+});
  
         
     });

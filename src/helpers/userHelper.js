@@ -240,7 +240,8 @@ const login = async (email, password) => {
 };
 
 
-const editProfileDetails = async (data, userId) => {
+const 
+editProfileDetails = async (data, userId) => {
   return new Promise(async (resolve, reject) => {
 
     try {
@@ -797,8 +798,8 @@ const successPayment = (userId) => {
       try {
          
           const updatedUser = await User.findByIdAndUpdate(userId, { verified: true });
-
-        
+           await KYC.findOneAndUpdate({userId:userId},{paymentStatus:true})
+           await Notifications.findOneAndDelete({userId:userId,type:'accept'})
           if (!updatedUser) {
               throw new Error("Failed to update user's verified status");
           }
@@ -816,6 +817,7 @@ const removeVerify = (userId) => {
   return new Promise(async (resolve, reject) => {
     try {
       const updatedUser = await User.findByIdAndUpdate(userId, { verified: false });
+                          await KYC.findOneAndDelete({userId:userId})
 
       if (!updatedUser) {
         throw new Error("Failed to update user's verified status");

@@ -257,6 +257,26 @@ const searchPost = async(req,res)=>{
   }
 }
 
+
+//flutter........
+const explore_Post = async(req,res)=>{
+  try{
+ 
+  postHelper.explore_Post()
+  .then((response) => {
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+
+
+
 const explorePost = async(req,res)=>{
   try{
     const {page,pageSize} = req.query
@@ -368,5 +388,6 @@ module.exports={
     getCommentCount,
     savePost,
     fetchSavedPost,
-    removeSavedPost
+    removeSavedPost,
+    explore_Post
 }
