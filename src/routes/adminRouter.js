@@ -7,20 +7,45 @@ const {protect} = require('../middleware/adminAuthMiddleware')
 
 
 
-// @desc    Register user
+// @desc    Admin login
+// @route   POST /api/admin/login
 // @access  Public
-router.post('/login',adminController.adminLogin)
-router.get('/getallusers',protect,adminController.getAllUsers)
-router.patch('/toggle-userblock/:userId',protect,adminController.userStatusToggle)
+router.post('/login', adminController.adminLogin);
 
-router.get('/get-reports',adminController.getAllReports)
+// @desc    Get all users
+// @route   GET /api/admin/getallusers
+// @access  Protected
+router.get('/getallusers', protect, adminController.getAllUsers);
 
-router.put('/take-action',adminController.takeAction)
+// @desc    Toggle user block status
+// @route   PATCH /api/admin/toggle-userblock/:userId
+// @access  Protected
+router.patch('/toggle-userblock/:userId', protect, adminController.userStatusToggle);
 
-router.get('/fetch-kyc',adminController.fetchAllKYC)
+// @desc    Get all reports
+// @route   GET /api/admin/get-reports
+// @access  Protected
+router.get('/get-reports',protect, adminController.getAllReports);
 
-router.delete('/reject-kyc/:kycId/:reason',protect,adminController.rejectKYC)
+// @desc    Take action on a report
+// @route   PUT /api/admin/take-action
+// @access  Protected
+router.put('/take-action',protect, adminController.takeAction);
 
-router.patch('/accept-kyc/:kycId',protect,adminController.acceptKYC)
+// @desc    Fetch all KYC requests
+// @route   GET /api/admin/fetch-kyc
+// @access  Protected
+router.get('/fetch-kyc',protect, adminController.fetchAllKYC);
+
+// @desc    Reject KYC request
+// @route   DELETE /api/admin/reject-kyc/:kycId/:reason
+// @access  Protected
+router.delete('/reject-kyc/:kycId/:reason', protect, adminController.rejectKYC);
+
+// @desc    Accept KYC request
+// @route   PATCH /api/admin/accept-kyc/:kycId
+// @access  Protected
+router.patch('/accept-kyc/:kycId', protect, adminController.acceptKYC);
+
 
 module.exports=router

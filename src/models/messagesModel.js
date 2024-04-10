@@ -8,6 +8,11 @@ const messageSchema = new Schema({
         ref: "user",
         require: true,
     },
+    recieverId: {
+        type: mongoose.Types.ObjectId,
+        ref: "user",
+        require: true,
+    },
 
     conversationId: {
         type: mongoose.Types.ObjectId,
@@ -22,7 +27,12 @@ const messageSchema = new Schema({
     isRead:{
         type:Boolean,
         default:false,
-    }
+    },
+    deleteType: {
+        type: String,
+        enum: ['self', 'everyone','none'], 
+        default: 'none'
+      }
 
 },{
     timestamps: true,

@@ -9,16 +9,16 @@ const verifyOtp = (email, token) => {
   return new Promise((resolve, reject) => {
       try {
           console.log(email, token);
-          console.log('deee');
+     
           Verify.findOne({ email: email, token: token })
               .then(async (data) => {
-                  console.log('jhfadsfahdfh');
+                 
                   if ( data && data.updatedAt && (Date.now() - data.updatedAt.getTime()) < 60000) {
                       await Verify.findOneAndUpdate({ email: email, used: false }, { used: true });
-                      console.log('data', data);
+                     
                       registration(data)
                           .then((response) => {
-                              console.log('success');
+                             
                               resolve(response); // Resolve response if registration is successful
                           })
                           .catch((error) => {

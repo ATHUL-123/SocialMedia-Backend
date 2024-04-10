@@ -803,6 +803,28 @@ const removeSaved = async(savedId)=>{
     }
 }
 
+const fetchTaggedPosts = async (userId) => {
+    try {
+        
+        const taggedPosts = await Post.find({ taggedUsers: userId })
+        .populate({
+            path: 'taggedUsers',
+            match: { _id: { $ne: userId } } // Exclude the current user's ID
+        })
+        .populate('userId');
+
+return taggedPosts;
+        
+      
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+};
+
 
 
 
@@ -828,5 +850,6 @@ module.exports = {
     savePost,
     fetchSavedPost,
     removeSaved,
-    explore_Post
+    explore_Post,
+    fetchTaggedPosts
 }

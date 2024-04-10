@@ -59,7 +59,7 @@ const getAllConversationsByUserId = (userId) => {
     return new Promise((resolve, reject) => {
         try {
             // Find conversations where the given userId is a member
-            Conversation.find({ members: { $in: [userId] } })
+            Conversation.find({ members: { $in: [userId] } }).sort({updatedAt:-1})
                 .then(conversations => {
                     resolve({
                         data: conversations,
@@ -76,7 +76,7 @@ const getAllConversationsByUserId = (userId) => {
     });
 };
 
-const addMessage = ( conversationId,senderId, text) => {
+const addMessage = ( conversationId,senderId, text,recieverId) => {
     return new Promise((resolve, reject) => {
         try {
             // Create a new message instance
@@ -84,7 +84,8 @@ const addMessage = ( conversationId,senderId, text) => {
             const newMessage = new Message({
                 senderId,
                 conversationId,
-                text
+                text,
+                recieverId
             });
 
             // Save the message to the database
@@ -136,8 +137,6 @@ const messageReaded = async (conversationId, readerId) => {
             { $set: { isRead: true } }
         );
 
-        console.log('Messages marked as read successfully');
-
         // Fetch the updated messages
         const messages = await Message.find({ conversationId: conversationId });
 
@@ -152,11 +151,45 @@ const messageReaded = async (conversationId, readerId) => {
 };
 
 
+const deleteMessage = async (messageId, deleteType, userId) => {
+    try {
+        const message = await Message.findById(messageId);
+        
+        if (!message) {
+            // Message not found
+            throw { status: 404, message: 'Message not found' };
+        }
+
+       
+        if (!message.senderId.equals(userId)) {
+           
+            throw { status: 403, message: 'Permission denied' };
+        } else if (deleteType === 'everyone' || deleteType === 'self'  ) {
+           
+            message.deleteType = deleteType
+            
+        }
+
+        
+    const data =    await message.save();
+        return { status: 200, message: 'Message deleted successfully',data:data };
+    } catch (error) {
+        throw { status: error.status || 500, message: error.message || 'Internal server error', error };
+    }
+};
+
+
+
+
+
+
+
 module.exports ={ 
     addConversation,
     getAllConversationsByUserId,
     addMessage,
     getAllMessages,
-    messageReaded
+    messageReaded,
+    deleteMessage
 
 }

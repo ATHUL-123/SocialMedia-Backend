@@ -6,56 +6,128 @@ const { protect } = require('../middleware/authMiddleware')
 
 
 
+// @desc    Send OTP
+// @route   POST /api/users/send-otp
+// @access  Public
+router.post('/send-otp', userController.sendOTP);
+
+// @desc    User login
+// @route   POST /api/users/login
+// @access  Public
+router.post('/login', userController.userLogin);
+
+// @desc    Verify OTP
+// @route   POST /api/users/verify-otp
+// @access  Public
+router.post('/verify-otp', userController.verifyOTP);
+
+// @desc    Google login
+// @route   POST /api/users/google-login
+// @access  Public
+router.post('/google-login', userController.googleLogin);
 
 
-//flutter...
-router.get('/getuser',protect,userController.loginnedUser)
-
-router.post('/send-otp',userController.sendOTP)
-router.post('/login',userController.userLogin)
-router.post('/verify-otp',userController.verifyOTP)
-router.put('/edit-profile',protect,userController.editProfile)
-router.post('/google-login',userController.googleLogin)
-router.get('/fetch-users',protect,userController.fetchUsers)
 // @desc    Follow user
-// @access  Registerd users
-router.post("/follow/:followeeId", protect,userController.followUser)
-// >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e
+// @route   POST /api/users/follow/:followeeId
+// @access  Registered users
+router.post("/follow/:followeeId", protect, userController.followUser);
 
-router.put("/unfollow/:unfolloweeId", protect,userController.unFollowUser)
-
-
-router.get('/isFollowing/:userId',protect,userController.isFollowing)
-
-router.get('/fetch-following',protect,userController.getFollowing)
-
-router.get('/fetch-followers',protect,userController.getFollowers)
-
-router.get('/get-single-user/:userId',protect,userController.getUser)
-
-router.patch('/toggleprivacy',protect,userController.togglePrivacy)
-
-router.get('/get-request',protect,userController.getAllRequest)
-
-router.put('/accept-request/:requestId',protect,userController.acceptRequest)
-
-router.put('/reject-request/:requestId',protect,userController.rejectRequest)
+// @desc    Get logged-in user
+// @route   GET /api/users/getuser
+// @access  Protected
+router.get('/getuser', protect, userController.loginnedUser);
 
 
-router.post('/payment/create',protect,userController.createPayment)
+// @desc    Edit profile
+// @route   PUT /api/users/edit-profile
+// @access  Protected
+router.put('/edit-profile', protect, userController.editProfile);
 
-router.post('/payment/success',protect,userController.userVerification)
+// @desc    Fetch users
+// @route   GET /api/users/fetch-users
+// @access  Protected
+router.get('/fetch-users', protect, userController.fetchUsers);
 
-router.patch('/remove-verify',protect,userController.removeVerify)
+// @desc    Unfollow user
+// @route   PUT /api/users/unfollow/:unfolloweeId
+// @access  Protected
+router.put("/unfollow/:unfolloweeId", protect,userController.unFollowUser);
 
-router.get('/notifications',protect,userController.getAllNotification)
+// @desc    Check if user is following another user
+// @route   GET /api/users/isFollowing/:userId
+// @access  Protected
+router.get('/isFollowing/:userId', protect, userController.isFollowing);
 
-router.get('/searchallusers',protect,userController.searchAllUsers)
+// @desc    Fetch following users
+// @route   GET /api/users/fetch-following
+// @access  Protected
+router.get('/fetch-following', protect, userController.getFollowing);
 
+// @desc    Fetch followers
+// @route   GET /api/users/fetch-followers
+// @access  Protected
+router.get('/fetch-followers', protect, userController.getFollowers);
 
-router.post('/kyc',protect,userController.kycPost)
+// @desc    Get single user by ID
+// @route   GET /api/users/get-single-user/:userId
+// @access  Protected
+router.get('/get-single-user/:userId', protect, userController.getUser);
 
-router.get('/isKyc',protect,userController.isKycSubmitted)
+// @desc    Toggle user privacy settings
+// @route   PATCH /api/users/toggleprivacy
+// @access  Protected
+router.patch('/toggleprivacy', protect, userController.togglePrivacy);
+
+// @desc    Get all friend requests
+// @route   GET /api/users/get-request
+// @access  Protected
+router.get('/get-request', protect, userController.getAllRequest);
+
+// @desc    Accept friend request
+// @route   PUT /api/users/accept-request/:requestId
+// @access  Protected
+router.put('/accept-request/:requestId', protect, userController.acceptRequest);
+
+// @desc    Reject friend request
+// @route   PUT /api/users/reject-request/:requestId
+// @access  Protected
+router.put('/reject-request/:requestId', protect, userController.rejectRequest);
+
+// @desc    Create payment
+// @route   POST /api/users/payment/create
+// @access  Protected
+router.post('/payment/create', protect, userController.createPayment);
+
+// @desc    Handle payment success
+// @route   POST /api/users/payment/success
+// @access  Protected
+router.post('/payment/success', protect, userController.userVerification);
+
+// @desc    Remove user verification
+// @route   PATCH /api/users/remove-verify
+// @access  Protected
+router.patch('/remove-verify', protect, userController.removeVerify);
+
+// @desc    Get all notifications
+// @route   GET /api/users/notifications
+// @access  Protected
+router.get('/notifications', protect, userController.getAllNotification);
+
+// @desc    Search all users
+// @route   GET /api/users/searchallusers
+// @access  Protected
+router.get('/searchallusers', protect, userController.searchAllUsers);
+
+// @desc    Submit KYC
+// @route   POST /api/users/kyc
+// @access  Protected
+router.post('/kyc', protect, userController.kycPost);
+
+// @desc    Check if KYC is submitted
+// @route   GET /api/users/isKyc
+// @access  Protected
+router.get('/isKyc', protect, userController.isKycSubmitted);
+
 
 module.exports=router
 // >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e

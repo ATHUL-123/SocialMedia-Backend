@@ -6,50 +6,119 @@ const authMiddleware = require('../middleware/authMiddleware')
 
 
 
-// @desc    Add user post
-// @access  Private
-router.post('/addPost',authMiddleware.protect,postController.addUserPost)
+// @desc    Add a new post
+// @route   POST /api/posts/addPost
+// @access  Protected
+router.post('/addPost', authMiddleware.protect, postController.addUserPost);
 
-router.get('/getpost',authMiddleware.protect,postController.getallpost)
-router.delete('/delete-post/:postId',authMiddleware.protect,postController.deletePost)
-router.put('/update-post/:postId',authMiddleware.protect,postController.editPost)
+// @desc    Get all posts
+// @route   GET /api/posts/getpost
+// @access  Protected
+router.get('/getpost', authMiddleware.protect, postController.getallpost);
 
-router.get('/getuserpost/:userId',postController.getPostByUserId)
+// @desc    Delete a post
+// @route   DELETE /api/posts/delete-post/:postId
+// @access  Protected
+router.delete('/delete-post/:postId', authMiddleware.protect, postController.deletePost);
 
-
-router.get('/allfollowingsPost',authMiddleware.protect,postController.getAllFolloweesPost)
-
-router.patch('/like-post/:postId',authMiddleware.protect,postController.likePost)
-
-router.patch('/unlike-post/:postId',authMiddleware.protect,postController.unLikePost)
-
-router.post('/report-post/:postId',authMiddleware.protect,postController.reportPost)
-
-router.post('/add-comment/:postId',authMiddleware.protect,postController.addComment)
-
-router.get('/fetch-comments/:postId',authMiddleware.protect,postController.getAllComments)
-
-router.delete('/delete-comment/:commentId',authMiddleware.protect,postController.deleteComment)
-
-router.put('/comments/reply-to/:commentId',authMiddleware.protect,postController.replyComment)
-
-router.get('/fetch-replies/:commentId',postController.fetchReplies)
-
-router.get('/search-post',postController.searchPost)
-
-router.get('/explore-posts',postController.explorePost)
-
-//flutter explorePage.......
-router.get('/exploreposts',authMiddleware.protect,postController.explore_Post)
+// @desc    Update a post
+// @route   PUT /api/posts/update-post/:postId
+// @access  Protected
+router.put('/update-post/:postId', authMiddleware.protect, postController.editPost);
 
 
-router.get('/commentCount/:postId',postController.getCommentCount)
+// @desc    Get posts by user ID
+// @route   GET /api/posts/getuserpost/:userId
+// @access  Public
+router.get('/getuserpost/:userId', postController.getPostByUserId);
 
-router.post('/savePost/:postId',authMiddleware.protect,postController.savePost)
+// @desc    Get posts from all followings
+// @route   GET /api/posts/allfollowingsPost
+// @access  Protected
+router.get('/allfollowingsPost', authMiddleware.protect, postController.getAllFolloweesPost);
 
-router.get('/savePost',authMiddleware.protect,postController.fetchSavedPost)
+// @desc    Like a post
+// @route   PATCH /api/posts/like-post/:postId
+// @access  Protected
+router.patch('/like-post/:postId', authMiddleware.protect, postController.likePost);
 
-router.delete('/savePost/:savedId',authMiddleware.protect,postController.removeSavedPost)
+// @desc    Unlike a post
+// @route   PATCH /api/posts/unlike-post/:postId
+// @access  Protected
+router.patch('/unlike-post/:postId', authMiddleware.protect, postController.unLikePost);
+
+
+// @desc    Report a post
+// @route   POST /api/posts/report-post/:postId
+// @access  Protected
+router.post('/report-post/:postId', authMiddleware.protect, postController.reportPost);
+
+// @desc    Add a comment to a post
+// @route   POST /api/posts/add-comment/:postId
+// @access  Protected
+router.post('/add-comment/:postId', authMiddleware.protect, postController.addComment);
+
+// @desc    Fetch all comments for a post
+// @route   GET /api/posts/fetch-comments/:postId
+// @access  Protected
+router.get('/fetch-comments/:postId', authMiddleware.protect, postController.getAllComments);
+
+// @desc    Delete a comment
+// @route   DELETE /api/posts/delete-comment/:commentId
+// @access  Protected
+router.delete('/delete-comment/:commentId', authMiddleware.protect, postController.deleteComment);
+
+
+// @desc    Reply to a comment
+// @route   PUT /api/posts/comments/reply-to/:commentId
+// @access  Protected
+router.put('/comments/reply-to/:commentId', authMiddleware.protect, postController.replyComment);
+
+// @desc    Fetch replies to a comment
+// @route   GET /api/posts/fetch-replies/:commentId
+// @access  Public
+router.get('/fetch-replies/:commentId',authMiddleware.protect ,postController.fetchReplies);
+
+// @desc    Search for posts
+// @route   GET /api/posts/search-post
+// @access  Public
+router.get('/search-post',authMiddleware.protect , postController.searchPost);
+
+// @desc    Explore posts
+// @route   GET /api/posts/explore-posts
+// @access  Public
+router.get('/explore-posts',authMiddleware.protect , postController.explorePost);
+
+
+// @desc    Explore posts
+// @route   GET /api/posts/exploreposts
+// @access  Protected
+router.get('/exploreposts',authMiddleware.protect , authMiddleware.protect, postController.explore_Post);
+
+// @desc    Get comment count for a post
+// @route   GET /api/posts/commentCount/:postId
+// @access  Public
+router.get('/commentCount/:postId',authMiddleware.protect , postController.getCommentCount);
+
+// @desc    Save a post
+// @route   POST /api/posts/savePost/:postId
+// @access  Protected
+router.post('/savePost/:postId', authMiddleware.protect, postController.savePost);
+
+// @desc    Fetch saved posts
+// @route   GET /api/posts/savePost
+// @access  Protected
+router.get('/savePost', authMiddleware.protect, postController.fetchSavedPost);
+
+// @desc    Remove a saved post
+// @route   DELETE /api/posts/savePost/:savedId
+// @access  Protected
+router.delete('/savePost/:savedId', authMiddleware.protect, postController.removeSavedPost);
+
+// @desc    Fetch tagged posts for a user
+// @route   GET /api/posts/fetch-tagged/:userId
+// @access  Protected
+router.get('/fetch-tagged/:userId', authMiddleware.protect, postController.fetchTaggedPost);
 
 
 module.exports=router

@@ -419,6 +419,10 @@ const isKycSubmitted = async(req,res)=>{
   }
  
 }
+
+
+
+
 module.exports={
  
     sendOTP,

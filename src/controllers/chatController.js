@@ -34,8 +34,8 @@ const createConversation = async(req,res)=>{
 
   const addMessage = async(req,res)=>{
     try {
-      const {conversationId,senderId,text} = req.body
-      chatHelper.addMessage(conversationId,senderId,text)
+      const {conversationId,senderId,text,recieverId} = req.body
+      chatHelper.addMessage(conversationId,senderId,text,recieverId)
       .then((response) => {
         res.status(200).send(response);
       })
@@ -78,10 +78,28 @@ const createConversation = async(req,res)=>{
     }
   }
 
+  const deleteMessage= async(req,res)=>{
+    try {
+       const {messageId,type} = req.params
+       const userId = req.user.id
+       
+      chatHelper.deleteMessage(messageId,type,userId)
+      .then((response) => {
+        res.status(200).send(response);
+      })
+      .catch((error) => {
+        res.status(500).send(error);
+      });
+    } catch (error) {
+        res.status(500).send(error)
+    }
+  }
+
   module.exports={
     createConversation,
     getConversations,
     addMessage,
     getAllMessages,
-    messageReaded
+    messageReaded,
+    deleteMessage
   }

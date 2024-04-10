@@ -368,6 +368,26 @@ const removeSavedPost= async(req,res)=>{
 }
 }
 
+
+const fetchTaggedPost= async(req,res)=>{
+  try{
+  
+    const {userId} = req.params
+    
+  postHelper.fetchTaggedPosts(userId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+
 module.exports={
     addUserPost,
     getallpost,
@@ -389,5 +409,6 @@ module.exports={
     savePost,
     fetchSavedPost,
     removeSavedPost,
-    explore_Post
+    explore_Post,
+    fetchTaggedPost
 }

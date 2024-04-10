@@ -10,26 +10,26 @@ const Connection = require('../models/connectionModel')
 const Razorpay = require("razorpay");
 require("dotenv").config();
 const Notifications = require('../models/notificationModel')
-const {setNotification} = require('../utils/noficationSetter')
+const { setNotification } = require('../utils/noficationSetter')
 const KYC = require('../models/kycModel')
 
 
 
 //flutter...............
 const logginedUser = (userId) => {
-  return new Promise(async(resolve, reject) => {
+  return new Promise(async (resolve, reject) => {
     try {
-     const user=await User.findById(userId)
+      const user = await User.findById(userId)
 
-       if(user){
+      if (user) {
         resolve(user)
-       }else{
+      } else {
         reject({
           status: 404,
           error_code: "DB_FETCH_ERROR",
           message: "User not found.",
         })
-       }
+      }
     } catch (error) {
       reject({
         status: 500,
@@ -90,7 +90,7 @@ const verifyEmailOtp = (email, token) => {
   return new Promise((resolve, reject) => {
     try {
       console.log('here');
-      verifyOtp(email,token)
+      verifyOtp(email, token)
         .then(async (response) => {
           User.findOne({ email: email })
             .then((user) => {
@@ -218,7 +218,7 @@ const login = async (email, password) => {
         blocked: existingUser.blocked,
         verified: existingUser.verified,
         role: existingUser.role,
-        backGroundImage:existingUser.backGroundImage
+        backGroundImage: existingUser.backGroundImage
       }
 
       // If user and password match, resolve with the user data
@@ -240,76 +240,76 @@ const login = async (email, password) => {
 };
 
 
-const 
-editProfileDetails = async (data, userId) => {
-  return new Promise(async (resolve, reject) => {
+const
+  editProfileDetails = async (data, userId) => {
+    return new Promise(async (resolve, reject) => {
 
-    try {
+      try {
 
-      const user = await User.findById(userId)
+        const user = await User.findById(userId)
 
-      if (!user) {
+        if (!user) {
+          reject({
+            error_code: 'DB_FETCH_ERROR',
+            message: 'User not found',
+            status: 401,
+          });
+        }
+
+        user.name = data.name;
+        user.profilePic = data.image;
+        user.bio = data.bio;
+        user.backGroundImage = data.backGroundImage
+
+        console.log(data.image);
+        user.save()
+          .then((updatedUser) => {
+
+            const user = {
+              _id: updatedUser._id,
+              userName: updatedUser.userName,
+              email: updatedUser.email,
+              token: generateToken(updatedUser._id),
+              profilePic: updatedUser.profilePic,
+              online: updatedUser.online,
+              phone: updatedUser.phone,
+              bio: updatedUser.bio,
+              name: updatedUser.name,
+              blocked: updatedUser.blocked,
+              verified: updatedUser.verified,
+              backGroundImage: updatedUser.backGroundImage
+            }
+
+            resolve({
+              status: 200,
+              message: 'user updated successfully',
+              updatedUser: user,
+            });
+          })
+          .catch((error) => {
+            console.log(error);
+            reject({
+              error_code: 'DB_UPDATE_ERROR',
+              message: 'Something went wrong while updating the post',
+              status: 500,
+            });
+          });
+
+
+
+      } catch (error) {
         reject({
-          error_code: 'DB_FETCH_ERROR',
-          message: 'User not found',
-          status: 401,
+          error_code: 'INTERNAL_SERVER_ERROR',
+          message: 'Something went wrong on the server',
+          status: 500,
         });
       }
-
-      user.name = data.name;
-      user.profilePic = data.image;
-      user.bio = data.bio;
-      user.backGroundImage= data.backGroundImage
-     
-      console.log(data.image);
-      user.save()
-        .then((updatedUser) => {
-
-          const user = {
-            _id: updatedUser._id,
-            userName: updatedUser.userName,
-            email: updatedUser.email,
-            token: generateToken(updatedUser._id),
-            profilePic: updatedUser.profilePic,
-            online: updatedUser.online,
-            phone: updatedUser.phone,
-            bio: updatedUser.bio,
-            name: updatedUser.name,
-            blocked: updatedUser.blocked,
-            verified: updatedUser.verified,
-           backGroundImage:updatedUser.backGroundImage
-          }
-
-          resolve({
-            status: 200,
-            message: 'user updated successfully',
-            updatedUser: user,
-          });
-        })
-        .catch((error) => {
-          console.log(error);
-          reject({
-            error_code: 'DB_UPDATE_ERROR',
-            message: 'Something went wrong while updating the post',
-            status: 500,
-          });
-        });
-
-
-
-    } catch (error) {
-      reject({
-        error_code: 'INTERNAL_SERVER_ERROR',
-        message: 'Something went wrong on the server',
-        status: 500,
-      });
-    }
-  })
-}
+    })
+  }
 
 
 const mongoose = require('mongoose');
-const fetchUsersHelp = async (userId, page, limit,searchQuery ='') => {
+const fetchUsersHelp = async (userId, page, limit, searchQuery = '') => {
   return new Promise(async (resolve, reject) => {
     try {
       const connection = await Connection.findOne({ userId: userId });
@@ -322,17 +322,17 @@ const fetchUsersHelp = async (userId, page, limit,searchQuery ='') => {
       if (typeof userId === 'string') {
         userId = new mongoose.Types.ObjectId(userId);
       }
-      
-      let totalCount ;
+
+      let totalCount;
       let users;
-      if(searchQuery){
-         totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' },userName:{$regex:searchQuery,$options:'i'} });
-         users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' },userName:{$regex:searchQuery,$options:'i'} })
+      if (searchQuery) {
+        totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' }, userName: { $regex: searchQuery, $options: 'i' } });
+        users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' }, userName: { $regex: searchQuery, $options: 'i' } })
           .skip((page - 1) * limit)
           .limit(limit);
-      }else{
-         totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
-         users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
+      } else {
+        totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
+        users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
           .skip((page - 1) * limit)
           .limit(limit);
       }
@@ -380,7 +380,7 @@ const fetchUsersBySearchQuery = async (searchQuery = '') => {
   });
 };
 
-  
+
 
 
 
@@ -420,7 +420,7 @@ const followHelper = async (userId, followeeId) => {
     // Validate user IDs
     const userIdValid = await isValidUserId(userId);
     const followeeIdValid = await isValidUserId(followeeId);
-    
+
     if (!userIdValid || !followeeIdValid) {
       throw new Error("Invalid user ID");
     }
@@ -444,7 +444,7 @@ const followHelper = async (userId, followeeId) => {
       { upsert: true, new: true }
     );
     const user = await User.findById(userId)
-    setNotification(followeeId,userId,user.userName,'started following you.',type='follow')
+    setNotification(followeeId, userId, user.userName, 'started following you.', type = 'follow')
     return { userConnection, followeeConnection };
   } catch (error) {
     console.error("Error in followHelper:", error.message);
@@ -465,7 +465,7 @@ const unFollowHelper = (userId, followeeId) => {
         reject(new Error("Invalid user ID"));
         return;
       }
-     
+
       Connection.findOneAndUpdate(
         { userId: userId },
         { $pull: { following: followeeId } },
@@ -508,7 +508,7 @@ const getFollowing = (userId, page, limit) => {
           }
           const following = userConnection.following;
           const totalCount = following.length;
-          
+
           // If pagination is applied, adjust totalCount
           if (page && limit) {
             const startIndex = (page - 1) * limit;
@@ -538,7 +538,7 @@ const getFollowers = (userId, page, limit) => {
           }
           const followers = userConnection.followers;
           const totalCount = followers.length;
-          
+
           // If pagination is applied, adjust totalCount
           if (page && limit) {
             const startIndex = (page - 1) * limit;
@@ -562,34 +562,34 @@ const getUserById = (userId, ownId) => {
   return new Promise(async (resolve, reject) => {
     try {
       console.log('Fetching user...');
-      
+
       // Fetch the user by userId
       const user = await User.findById(userId);
-      
+
       if (!user) {
         throw new Error('User not found');
       }
-      
-   
-      const userConnection = await Connection.findOne({userId:ownId});
-      
- 
-     
+
+
+      const userConnection = await Connection.findOne({ userId: ownId });
+
+
+
       let access = !user.isPrivate;
-      let following=false;
-      
+      let following = false;
+
       if (userConnection && userConnection.following.includes(userId)) {
         access = true;
-       following=true;
+        following = true;
       }
 
-      const OtherUserConnection = await Connection.findOne({userId:userId});
-      if (OtherUserConnection && OtherUserConnection.requested.includes(ownId)){
-        following='requested'
+      const OtherUserConnection = await Connection.findOne({ userId: userId });
+      if (OtherUserConnection && OtherUserConnection.requested.includes(ownId)) {
+        following = 'requested'
       }
 
-      
-    
+
+
       const userData = {
         userName: user.userName,
         name: user.name,
@@ -601,9 +601,9 @@ const getUserById = (userId, ownId) => {
         phone: user.phone,
         online: user.online,
         access: access,
-        following:following
+        following: following
       };
-      
+
       resolve(userData);
     } catch (error) {
       console.error('Error in getUserById:', error);
@@ -624,7 +624,7 @@ const togglePrivacy = async (userId) => {
     }
 
     // Toggle the value of isPrivate
-    user.isPrivate = !user.isPrivate 
+    user.isPrivate = !user.isPrivate
 
     // Save the updated user object
     await user.save();
@@ -650,166 +650,166 @@ const togglePrivacy = async (userId) => {
 
 const getRequested = async (userId) => {
   return new Promise(async (resolve, reject) => {
-      try {
-          // Step 1: Find the user's connections
-          const userConnection = await Connection.findOne({ userId: userId }).populate('requested')
+    try {
+      // Step 1: Find the user's connections
+      const userConnection = await Connection.findOne({ userId: userId }).populate('requested')
 
-          if (!userConnection) {
-              resolve([]); // No connections found, return an empty array
-              return;
-          }
-           
-          if(userConnection.requested){
-            resolve(userConnection.requested);
-          }else{
-            reject({message:"No Requests"})
-          }
-          
-      } catch (error) {
-          reject({
-              error_code: 'INTERNAL_SERVER_ERROR',
-              message: 'Something went wrong on the server',
-              status: 500,
-          });
+      if (!userConnection) {
+        resolve([]); // No connections found, return an empty array
+        return;
       }
+
+      if (userConnection.requested) {
+        resolve(userConnection.requested);
+      } else {
+        reject({ message: "No Requests" })
+      }
+
+    } catch (error) {
+      reject({
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+      });
+    }
   });
 }
 
 const acceptRequest = async (userId, requestId) => {
   return new Promise(async (resolve, reject) => {
-      try {
-        console.log(userId,requestId);
-        console.log('insisnsinsinsin');
-          // Step 1: Find the user's connections
-          const userConnection = await Connection.findOne({ userId: userId })
+    try {
+      console.log(userId, requestId);
+      console.log('insisnsinsinsin');
+      // Step 1: Find the user's connections
+      const userConnection = await Connection.findOne({ userId: userId })
 
-          if (!userConnection) {
-              reject({ message: "User connection not found" });
-              return;
-          }
-
-          // Step 2: Check if there are any requests
-          if (!userConnection.requested || userConnection.requested.length === 0) {
-            reject({ message: "No pending requests found" });
-            return;
-          }
-
-          // Step 3: Remove requestId from requested array and add it to followers and following arrays
-         const user = await Connection.findOneAndUpdate(
-            { userId: userId },
-            { 
-              $pull: { requested: requestId },
-              $addToSet: { followers: requestId }
-            },
-            { upsert: true, new: true }
-          );
-
-          await Connection.findOneAndUpdate(
-            { userId: requestId },
-            { $addToSet: { following: userId } },
-            { upsert: true, new: true }
-          );
-    console.log(user);
-          resolve("Request accepted successfully");
-          
-      } catch (error) {
-          console.error("Error in acceptRequest:", error);
-          reject({
-              error_code: 'INTERNAL_SERVER_ERROR',
-              message: 'Something went wrong on the server',
-              status: 500,
-          });
+      if (!userConnection) {
+        reject({ message: "User connection not found" });
+        return;
       }
+
+      // Step 2: Check if there are any requests
+      if (!userConnection.requested || userConnection.requested.length === 0) {
+        reject({ message: "No pending requests found" });
+        return;
+      }
+
+      // Step 3: Remove requestId from requested array and add it to followers and following arrays
+      const user = await Connection.findOneAndUpdate(
+        { userId: userId },
+        {
+          $pull: { requested: requestId },
+          $addToSet: { followers: requestId }
+        },
+        { upsert: true, new: true }
+      );
+
+      await Connection.findOneAndUpdate(
+        { userId: requestId },
+        { $addToSet: { following: userId } },
+        { upsert: true, new: true }
+      );
+      console.log(user);
+      resolve("Request accepted successfully");
+
+    } catch (error) {
+      console.error("Error in acceptRequest:", error);
+      reject({
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+      });
+    }
   });
 }
 
 
 const rejectRequest = async (userId, requestId) => {
   return new Promise(async (resolve, reject) => {
-      try {
-          // Step 1: Find the user's connections
-          const userConnection = await Connection.findOne({ userId: userId });
+    try {
+      // Step 1: Find the user's connections
+      const userConnection = await Connection.findOne({ userId: userId });
 
-          if (!userConnection) {
-              reject({ message: "User connection not found" });
-              return;
-          }
-
-          // Step 2: Check if there are any requests
-          if (!userConnection.requested || userConnection.requested.length === 0) {
-              reject({ message: "No pending requests found" });
-              return;
-          }
-
-          // Step 3: Remove requestId from requested array
-          const updatedUser = await Connection.findOneAndUpdate(
-              { userId: userId },
-              { $pull: { requested: requestId } },
-              { new: true }
-          );
-
-     
-
-          resolve("Request rejected successfully");
-      } catch (error) {
-          console.error("Error in rejectRequest:", error);
-          reject({
-              error_code: 'INTERNAL_SERVER_ERROR',
-              message: 'Something went wrong on the server',
-              status: 500,
-          });
+      if (!userConnection) {
+        reject({ message: "User connection not found" });
+        return;
       }
+
+      // Step 2: Check if there are any requests
+      if (!userConnection.requested || userConnection.requested.length === 0) {
+        reject({ message: "No pending requests found" });
+        return;
+      }
+
+      // Step 3: Remove requestId from requested array
+      const updatedUser = await Connection.findOneAndUpdate(
+        { userId: userId },
+        { $pull: { requested: requestId } },
+        { new: true }
+      );
+
+
+
+      resolve("Request rejected successfully");
+    } catch (error) {
+      console.error("Error in rejectRequest:", error);
+      reject({
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+      });
+    }
   });
 }
 
 
 const createPayment = () => {
   return new Promise(async (resolve, reject) => {
-      try {
-  
-          const instance = new Razorpay({
-              key_id: process.env.RAZORPAY_KEY_ID,
-              key_secret: process.env.RAZORPAY_SECRET,
-          });
-            
-          const options = {
-              amount: 1200 * 100, // amount in smallest currency unit
-              currency: "INR",
-              receipt: "receipt_order_74394",
-          };
+    try {
 
-          const order = await instance.orders.create(options);
+      const instance = new Razorpay({
+        key_id: process.env.RAZORPAY_KEY_ID,
+        key_secret: process.env.RAZORPAY_SECRET,
+      });
 
-          if (!order) {
-              reject("Some error occurred while creating the order");
-              return;
-          }
+      const options = {
+        amount: 1200 * 100, // amount in smallest currency unit
+        currency: "INR",
+        receipt: "receipt_order_74394",
+      };
 
-          resolve(order);
-      } catch (error) {
-          console.error("Error in createPayment:", error);
-          reject(error);
+      const order = await instance.orders.create(options);
+
+      if (!order) {
+        reject("Some error occurred while creating the order");
+        return;
       }
+
+      resolve(order);
+    } catch (error) {
+      console.error("Error in createPayment:", error);
+      reject(error);
+    }
   });
 };
 
 const successPayment = (userId) => {
   return new Promise(async (resolve, reject) => {
-      try {
-         
-          const updatedUser = await User.findByIdAndUpdate(userId, { verified: true });
-           await KYC.findOneAndUpdate({userId:userId},{paymentStatus:true})
-           await Notifications.findOneAndDelete({userId:userId,type:'accept'})
-          if (!updatedUser) {
-              throw new Error("Failed to update user's verified status");
-          }
- 
-          console.log('successs');
-          resolve(updatedUser);
-      } catch (error) {
-          console.error("Error in successPayment:", error);
-          reject(error);
+    try {
+
+      const updatedUser = await User.findByIdAndUpdate(userId, { verified: true });
+      await KYC.findOneAndUpdate({ userId: userId }, { paymentStatus: true })
+      await Notifications.findOneAndDelete({ userId: userId, type: 'accept' })
+      if (!updatedUser) {
+        throw new Error("Failed to update user's verified status");
       }
+
+      console.log('successs');
+      resolve(updatedUser);
+    } catch (error) {
+      console.error("Error in successPayment:", error);
+      reject(error);
+    }
   });
 };
 
@@ -817,7 +817,7 @@ const removeVerify = (userId) => {
   return new Promise(async (resolve, reject) => {
     try {
       const updatedUser = await User.findByIdAndUpdate(userId, { verified: false });
-                          await KYC.findOneAndDelete({userId:userId})
+      await KYC.findOneAndDelete({ userId: userId })
 
       if (!updatedUser) {
         throw new Error("Failed to update user's verified status");
@@ -851,25 +851,25 @@ const isFollowing = async (userId, followeeId) => {
 
 const getAllNotifications = async (userId) => {
   if (!userId) {
-      throw new Error("User ID is required");
+    throw new Error("User ID is required");
   }
 
   try {
-      const notifications = await Notifications.find({ userId })
-          .sort({ createdAt: -1 })
-          .populate('from')
-          .populate({
-              path: 'postId',
-              select: '_id image', // You can select specific fields from the postId object if needed
-              options: { // Conditionally populate postId only if it exists
-                  skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
-              }
-          });
+    const notifications = await Notifications.find({ userId })
+      .sort({ createdAt: -1 })
+      .populate('from')
+      .populate({
+        path: 'postId',
+        select: '_id image', // You can select specific fields from the postId object if needed
+        options: { // Conditionally populate postId only if it exists
+          skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+        }
+      });
 
-      return notifications;
+    return notifications;
   } catch (error) {
-      console.error("Error while getting notifications:", error);
-      throw error;
+    console.error("Error while getting notifications:", error);
+    throw error;
   }
 };
 
@@ -877,20 +877,20 @@ const getAllNotifications = async (userId) => {
 
 const kycPost = async (userId, data) => {
   try {
-   
+
     const kycData = new KYC({
       fullName: data.fullName,
       dateOfBirth: data.DOB,
       gender: data.gender,
       idProof: data.idProof,
-      userId :userId
+      userId: userId
     });
 
-   
+
     const savedKYC = await kycData.save();
 
-   
-    return savedKYC; 
+
+    return savedKYC;
   } catch (error) {
     // Handle any errors that occur during the process
     console.error('Error saving KYC data:', error);
@@ -898,14 +898,14 @@ const kycPost = async (userId, data) => {
   }
 };
 
-const isKycSubmitted = async(userId)=>{
+const isKycSubmitted = async (userId) => {
   try {
-    const kyc =await KYC.findOne({userId:userId})
+    const kyc = await KYC.findOne({ userId: userId })
     return !!kyc
   } catch (error) {
-     // Handle any errors that occur during the process
-     console.error('Error saving KYC data:', error);
-     throw error; // Throw the error to be handled by the caller
+    // Handle any errors that occur during the process
+    console.error('Error saving KYC data:', error);
+    throw error; // Throw the error to be handled by the caller
   }
 }
 
