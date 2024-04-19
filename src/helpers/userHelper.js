@@ -855,6 +855,7 @@ const getAllNotifications = async (userId) => {
   }
 
   try {
+   
     const notifications = await Notifications.find({ userId })
       .sort({ createdAt: -1 })
       .populate('from')
@@ -865,13 +866,27 @@ const getAllNotifications = async (userId) => {
           skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
         }
       });
-
+    await Notifications.updateMany({userId:userId},{$set:{isRead:true}})
     return notifications;
   } catch (error) {
     console.error("Error while getting notifications:", error);
     throw error;
   }
 };
+
+const getNotificationCount = async(userId)=>{
+  if (!userId) {
+    throw new Error("User ID is required");
+  }
+  try {
+   
+    const notificationCount = await Notifications.find({userId:userId,isRead:false}).countDocuments()
+    return notificationCount;
+  } catch (error) {
+    console.error("Error while getting notifications:", error);
+    throw error;
+  }
+}
 
 
 
@@ -910,6 +925,25 @@ const isKycSubmitted = async (userId) => {
 }
 
 
+const getCounts= async (userId)=> {
+  try {
+    const connection = await Connection.findOne({ userId }).exec();
+    if (!connection) {
+       return null
+    }
+
+    const followersCount = connection.followers.length;
+    const followingCount = connection.following.length;
+
+    return { followersCount, followingCount };
+  } catch (error) {
+    // Handle error
+    console.error('Error while getting counts:', error);
+    throw error;
+  }
+}
+
+
 module.exports = {
   sendVerifyEmail,
   login,
@@ -934,7 +968,9 @@ module.exports = {
   isFollowing,
   fetchUsersBySearchQuery,
   kycPost,
-  isKycSubmitted
+  isKycSubmitted,
+  getCounts,
+  getNotificationCount
 }
 
 

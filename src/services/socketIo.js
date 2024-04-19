@@ -11,6 +11,7 @@ const socketIo_Config = (io) => {
         // Event listener for client disconnection
         socket.on("disconnect", () => {
             console.log("A client disconnected");
+            console.log('log usersss...',users);
             removeUser(socket.id);
             io.emit('getUsers', users);
         });
@@ -34,13 +35,16 @@ const socketIo_Config = (io) => {
         // Event listener for adding user
         socket.on('addUser', (userId) => {
             addUser(userId, socket.id);
+            console.log('userererer',users);
             io.emit('getUsers', users);
+            
         });
 
         // Event listener for sending message
         socket.on("sendMessage", ({ senderId, recieverId, text }) => {
           
             const user = getUser(recieverId);
+            console.log(senderId,'message is sended to',recieverId);
             if (user) {
                 io.to(user.socketId).emit("getMessage", { senderId, text, recieverId });
             } else {
@@ -60,7 +64,7 @@ const socketIo_Config = (io) => {
         socket.on("stopTyping", ({ senderId, recieverId }) => {
             const user = getUser(recieverId);
             if (user) {
-                io.to(user.socketId).emit("userStopTyping", { senderId });
+                io.to(user.socketId).emit("userStopTyping", { senderId,recieverId });
             }
         });
 
@@ -85,6 +89,38 @@ const socketIo_Config = (io) => {
                 console.log('User not found');
             }
         });
+
+        socket.on('fetchOnline',({userId})=>{
+           const user = getUser(userId)
+           console.log('inininnnnisssssssdsfdsfas');
+           if(user){
+            io.to(user.socketId).emit('getUsers', users);
+           }else{
+            console.log('User not found');
+           }
+        })
+
+        socket.on('notification-sent',({message,senderId,recieverId})=>{
+            const user = getUser(recieverId)
+           console.log('inininnnnisssssssdsfdsfas',message,senderId,recieverId);
+           if(user){
+            console.log(user.socketId);
+            io.to(user.socketId).emit('notification-get',{message,senderId});
+           }else{
+            console.log('User not found');
+           }
+        })
+
+        socket.on('videoCallEmit',({userName,profilePic,recieverId,roomId})=>{
+            console.log('userName',userName,recieverId);
+            const user = getUser(recieverId)
+            if(user){
+                console.log(user.socketId);
+                io.to(user.socketId).emit('videoCallon',{userName,profilePic,roomId});
+               }else{
+                console.log('User not found');
+               }
+        })
     });
 };
 

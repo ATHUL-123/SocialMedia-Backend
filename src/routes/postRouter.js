@@ -115,10 +115,26 @@ router.get('/savePost', authMiddleware.protect, postController.fetchSavedPost);
 // @access  Protected
 router.delete('/savePost/:savedId', authMiddleware.protect, postController.removeSavedPost);
 
+// @flutter This is only for flutter  
+// @desc    Remove a saved post
+// @route   DELETE /api/posts/savePost/:savedId
+// @access  Protected
+router.delete('/savePosts/:postId', authMiddleware.protect, postController.removeSavedPostByPostId);
+// @flutter This is only for flutter 
+// @desc    Fetch saved posts
+// @route   GET /api/posts/savePost
+// @access  Protected
+router.get('/savePosts', authMiddleware.protect, postController.fetchSavedPostFlutter);
+
 // @desc    Fetch tagged posts for a user
 // @route   GET /api/posts/fetch-tagged/:userId
 // @access  Protected
 router.get('/fetch-tagged/:userId', authMiddleware.protect, postController.fetchTaggedPost);
+
+// @desc    Fetch Liked users for a post
+// @route   GET /api/posts/fetch-liked/:postId
+// @access  Protected
+router.get('/fetch-liked/:postId', authMiddleware.protect,postController.fetchLiked);
 
 
 module.exports=router

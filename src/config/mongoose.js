@@ -1,5 +1,5 @@
 const mongoose = require('mongoose')
-
+const nodemon = require('nodemon');
 // @desc    Mongoose configuration
 // @file   < Config >
 // @access  Private
@@ -11,6 +11,7 @@ const connect = async() => {
         console.log('mongoDB is connected');
     } catch (error) {
         console.log(error);
+        nodemon.restart();
     }
 }
 

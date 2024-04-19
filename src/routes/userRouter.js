@@ -128,6 +128,13 @@ router.post('/kyc', protect, userController.kycPost);
 // @access  Protected
 router.get('/isKyc', protect, userController.isKycSubmitted);
 
+// @desc    Check if KYC is submitted
+// @route   GET /api/users/isKyc
+// @access  Protected
+router.get('/get-count/:userId', protect, userController.getConnectionCount)
+
+router.get('/notification-count',protect,userController.getNotificationCount)
+
 
 module.exports=router
 // >>>>>>> 9b9590f75b470d47ac41c6301e4d608776ebab8e

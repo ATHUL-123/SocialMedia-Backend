@@ -420,7 +420,30 @@ const isKycSubmitted = async(req,res)=>{
  
 }
 
+const getConnectionCount = async(req,res)=>{
+  try {
+    const { userId }= req.params
+   
 
+    const response = await userHelper.getCounts(userId)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
+
+const getNotificationCount = async(req,res)=>{
+  try {
+    const  userId = req.user.id
+   
+   const count = await userHelper.getNotificationCount(userId)
+    res.status(200).send({count:count})
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
 
 
 module.exports={
@@ -448,6 +471,8 @@ module.exports={
     isFollowing,
     searchAllUsers,
     kycPost,
-    isKycSubmitted
+    isKycSubmitted,
+    getConnectionCount,
+    getNotificationCount
 
 }

@@ -655,7 +655,7 @@ const explore_Post = (userId) => {
             }
         }) 
            .sort({ createdAt: -1 });
-
+         
                
 
                 resolve(posts);
@@ -675,31 +675,42 @@ const explore_Post = (userId) => {
 
 
 
-const explorePost = (page = 1, pageSize = 10) => {
+const explorePost = (page = 1, pageSize = 10, userId) => {
     return new Promise(async(resolve, reject) => {
         try {
             // Step 1: Find all unblocked posts
-           const posts = await Post.find({ blocked: false,hidden:false })
-           .populate('userId')
-           .populate({
-            path: 'taggedUsers',
-            select: '_id userName', // You can select specific fields from the postId object if needed
-            options: { // Conditionally populate postId only if it exists
-                skipInvalidIds: true // Skip populating if postId is not a valid ObjectId
+            const posts = await Post.find({ blocked: false, hidden: false })
+                .populate('userId')
+                .populate({
+                    path: 'taggedUsers',
+                    select: '_id userName',
+                    options: {
+                        skipInvalidIds: true
+                    }
+                })
+                .sort({ createdAt: -1 });
+
+            const followeesPosts = [];
+
+            for (const post of posts) {
+                const isLiked = checkIfPostIsLiked(post, userId);
+                const isSaved = await checkIfPostisSaved(post._id, userId);
+                const postObject = post.toObject();
+                postObject.isLiked = isLiked;
+                postObject.isSaved = isSaved;
+                followeesPosts.push(postObject);
             }
-        }) 
-           .sort({ createdAt: -1 });
 
-                // Step 2: Get total count of unblocked posts
-                const totalCount = posts.length;
+            // Step 2: Get total count of unblocked posts
+            const totalCount = posts.length;
 
-                // Step 3: Apply pagination
-                const startIndex = (page - 1) * pageSize;
-                const endIndex = page * pageSize;
-                const paginatedPosts = posts.slice(startIndex, endIndex);
+            // Step 3: Apply pagination
+            const startIndex = (page - 1) * pageSize;
+            const endIndex = page * pageSize;
+            const paginatedPosts = followeesPosts.slice(startIndex, endIndex);
 
-                resolve(paginatedPosts);
-            
+            resolve(paginatedPosts);
+
         } catch (error) {
             console.log(error);
             reject({
@@ -710,6 +721,7 @@ const explorePost = (page = 1, pageSize = 10) => {
         }
     });
 };
+
 
 const getCommentCountForPost = async (postId) => {
     try {
@@ -790,9 +802,42 @@ const fetchSavedPost = async(userId)=>{
     }
 }
 
+
+const fetchSavedPostFlutter = async (userId) => {
+    try {
+        const savedPost = await Saved.find({ userId })
+            .populate('userId')
+            .populate('postId')
+            .sort({ createdAt: -1 })
+            .select('-_id'); // Exclude the _id field
+        console.log(savedPost);
+        return savedPost;
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+}
+
+
 const removeSaved = async(savedId)=>{
     try {
         const response = await Saved.findByIdAndDelete(savedId)
+        return response
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+        };
+    }
+}
+
+const removeSavedFlutter = async(postId)=>{
+    try {
+        const response = await Saved.findOneAndDelete({postId:postId})
         return response
     } catch (error) {
         throw {
@@ -825,6 +870,22 @@ return taggedPosts;
     }
 };
 
+const fetchLiked =async (postId)=>{
+  try {
+    console.log(postId);
+    const post = await Post.findById(postId).populate('likes')
+
+    return (post.likes)
+  } catch (error) {
+    console.log(error);
+    throw {
+        error_code: 'INTERNAL_SERVER_ERROR',
+        message: 'Something went wrong on the server',
+        status: 500,
+    };
+  }
+}
+
 
 
 
@@ -851,5 +912,8 @@ module.exports = {
     fetchSavedPost,
     removeSaved,
     explore_Post,
-    fetchTaggedPosts
+    fetchTaggedPosts,
+    fetchLiked,
+    removeSavedFlutter,
+    fetchSavedPostFlutter
 }

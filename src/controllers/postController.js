@@ -280,7 +280,8 @@ const explore_Post = async(req,res)=>{
 const explorePost = async(req,res)=>{
   try{
     const {page,pageSize} = req.query
-  postHelper.explorePost(page,pageSize)
+    const userId = req.user.id
+  postHelper.explorePost(page,pageSize,userId)
   .then((response) => {
     res.status(200).send(response);
   })
@@ -368,6 +369,44 @@ const removeSavedPost= async(req,res)=>{
 }
 }
 
+//for flutter..........................
+const removeSavedPostByPostId= async(req,res)=>{
+  try{
+  
+    const {postId} = req.params
+    
+  postHelper.removeSavedFlutter(postId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+const fetchSavedPostFlutter= async(req,res)=>{
+  try{
+  
+    const userId = req.user.id
+   
+  postHelper.fetchSavedPostFlutter(userId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+//flutter end............................................
 
 const fetchTaggedPost= async(req,res)=>{
   try{
@@ -375,6 +414,24 @@ const fetchTaggedPost= async(req,res)=>{
     const {userId} = req.params
     
   postHelper.fetchTaggedPosts(userId)
+  .then((response) => {
+  
+    res.status(200).send(response);
+  })
+  .catch((error) => {
+    res.status(500).send(error);
+  });
+} catch (error) {
+  res.status(500).send(error)
+}
+}
+
+const fetchLiked= async(req,res)=>{
+  try{
+  
+    const {postId} = req.params
+    
+  postHelper.fetchLiked(postId)
   .then((response) => {
   
     res.status(200).send(response);
@@ -410,5 +467,8 @@ module.exports={
     fetchSavedPost,
     removeSavedPost,
     explore_Post,
-    fetchTaggedPost
+    fetchTaggedPost,
+    fetchLiked,
+    removeSavedPostByPostId,
+    fetchSavedPostFlutter
 }

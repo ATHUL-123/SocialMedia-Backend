@@ -159,7 +159,7 @@ const deleteMessage = async (messageId, deleteType, userId) => {
             // Message not found
             throw { status: 404, message: 'Message not found' };
         }
-
+        
        
         if (!message.senderId.equals(userId)) {
            
@@ -167,6 +167,11 @@ const deleteMessage = async (messageId, deleteType, userId) => {
         } else if (deleteType === 'everyone' || deleteType === 'self'  ) {
            
             message.deleteType = deleteType
+            const conversation = await Conversation.findById(message.conversationId)
+            if(conversation.lastMessage === message.text ){
+                conversation.lastMessage='message deleted';
+                conversation.save()
+            }
             
         }
 
