@@ -48,4 +48,13 @@ router.delete('/reject-kyc/:kycId/:reason', protect, adminController.rejectKYC);
 router.patch('/accept-kyc/:kycId', protect, adminController.acceptKYC);
 
 
+router.get('/getcounts',protect,adminController.getCounts)
+
+router.get('/getaverage',protect,adminController.getAverage);
+
+router.get('/chartData',protect,adminController.getChartData);
+
+
+
 module.exports=router
+

@@ -141,6 +141,52 @@ const acceptKYC = async(req,res)=>{
   }
 }
 
+const getCounts = async(req,res)=>{
+  try { 
+    adminHelper.getCounts()
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+}
+
+
+const getAverage = async(req,res)=>{
+  try { 
+    adminHelper.getAverage()
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+}
+
+const getChartData = async(req,res)=>{
+  try { 
+     const {year} = req.query
+    adminHelper.getChartData(year)
+    .then((response)=>{
+     res.status(200).json(response)
+   })
+   .catch((err)=>{
+     res.status(500).send(err);
+   })
+  } catch (error) {
+    console.log(error);
+    res.status(500).send(error)
+  }
+}
 
 module.exports={
     adminLogin,
@@ -150,5 +196,8 @@ module.exports={
     takeAction,
     fetchAllKYC,
     rejectKYC,
-    acceptKYC
+    acceptKYC,
+    getCounts,
+    getAverage,
+    getChartData
 }

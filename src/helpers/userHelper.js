@@ -55,32 +55,46 @@ const sendVerifyEmail = (data) => {
               message: "You already have an account.",
             });
           } else {
-            const verify = await Verify.findOne({ email: data.email });
-            if (verify && verify.updatedAt && (Date.now() - verify.updatedAt.getTime()) < 60000) {
-              reject({
-                status: 401,
-                message: "OTP already sent within the last one minute",
+            // Check if the username is already taken
+            User.findOne({ userName: data.userName })
+              .then(async (user) => {
+                if (user) {
+                  reject({
+                    status: 401,
+                    message: "The username is already taken.",
+                  });
+                } else {
+                  const verify = await Verify.findOne({ email: data.email });
+                  if (verify && verify.updatedAt && (Date.now() - verify.updatedAt.getTime()) < 60000) {
+                    reject({
+                      status: 401,
+                      message: "OTP already sent within the last one minute",
+                    });
+                  } else {
+                    // If everything is fine, proceed with sending the email
+                    const response = await sendEmail(data);
+                    resolve(response);
+                  }
+                }
+              })
+              .catch((error) => {
+                reject(error);
               });
-            } else {
-              // If everything is fine, proceed with sending the email
-              const response = await sendEmail(data);
-              resolve(response);
-            }
           }
         })
         .catch((error) => {
           reject(error);
         });
     } catch (error) {
+      console.log(error);
       reject({
         status: 500,
         error_code: "INTERNAL_SERVER_ERROR",
-        message: "Something went wrong please try after sometime.",
+        message: "Something went wrong. Please try again later.",
       });
     }
   });
 };
-
 
 
 // @desc    Verify email
@@ -218,7 +232,8 @@ const login = async (email, password) => {
         blocked: existingUser.blocked,
         verified: existingUser.verified,
         role: existingUser.role,
-        backGroundImage: existingUser.backGroundImage
+        backGroundImage: existingUser.backGroundImage,
+        isPrivate:existingUser.isPrivate
       }
 
       // If user and password match, resolve with the user data

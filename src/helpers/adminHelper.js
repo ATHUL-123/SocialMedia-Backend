@@ -3,9 +3,12 @@ const saltRounds = 10; //setting salt rounds
 const generateJwt = require('../services/jwt')
 const User = require('../models/userModel')
 const Reports = require('../models/reportsModel');
+const Comment = require('../models/commentModel');
 const Post = require('../models/postModel');
 const KYC  = require('../models/kycModel')
 const {setNotification} = require('../utils/noficationSetter')
+const Connection = require('../models/connectionModel');
+const { post } = require('../routes/userRouter');
 // @desc    Login admin
 // @route   POST /admin/login
 // @access  Public
@@ -218,6 +221,178 @@ const acceptKYC = async (kycId,adminId) => {
     }
 };
 
+const getCounts = async()=>{
+    try {
+    const userCount = await User.find({}).countDocuments();
+    const postCount = await Post.find({}).countDocuments();
+    const connectionCount = await Connection.find({}).countDocuments();
+    
+    const data ={
+        userCount:userCount,
+        postCount:postCount,
+        connectionCount:connectionCount
+    }
+    
+    return data
+
+
+
+    } catch (error) {
+        console.log(error);
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
+    
+}
+
+
+const getAverage =async()=>{
+    try {
+    
+    const postCount = await Post.find({}).countDocuments();
+    const commentCount=await Comment.find({}).countDocuments();
+    const userCount   = await User.find({}).countDocuments();
+    const verifiedCount= await User.find({verified:true}).countDocuments();
+    
+    // Calculate averages
+    const averageCommentsByPost = commentCount / postCount;
+    const averageConnectionsByUser = userCount > 0 ? userCount / commentCount : 0;
+    const averagePostsByUser = userCount > 0 ? postCount / userCount : 0;
+    const averageVerifiedUsersByUsers = verifiedCount / userCount;
+
+    // Return the averages
+    return {
+        averageCommentsByPost,
+        averageConnectionsByUser,
+        averagePostsByUser,
+        averageVerifiedUsersByUsers
+    };
+        
+    } catch (error) {
+        console.log(error);
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
+}
+
+const getChartData = async (year) => {
+    try {
+        const matchCondition = year ? { $expr: { $eq: [{ $year: "$createdAt" }, parseInt(year)] } } : {};
+
+        const userCounts = await User.aggregate([
+            { $match: matchCondition },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: "$_id",
+                    count: 1
+                }
+            }
+        ]);
+
+        const usersMonthlyCounts = userCounts.map(({ month, count }) => ({ label: month, count }));
+
+        const reportCounts = await Reports.aggregate([
+            { $match: matchCondition },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: "$_id",
+                    count: 1
+                }
+            }
+        ]);
+
+        const ReportsMonthlyCounts = reportCounts.map(({ month, count }) => ({ label: month, count }));
+
+        const postCounts = await Post.aggregate([
+            { $match: matchCondition },
+            {
+                $group: {
+                    _id: { $dateToString: { format: "%Y-%m", date: "$createdAt" } },
+                    count: { $sum: 1 }
+                }
+            },
+            {
+                $project: {
+                    _id: 0,
+                    month: "$_id",
+                    count: 1
+                }
+            }
+        ]);
+
+        const PostMonthlyCounts = postCounts.map(({ month, count }) => ({ label: month, count }));
+
+        // Function to convert numeric month to string month
+function getMonthString(monthNumeric) {
+    const months = [
+        'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'
+    ];
+    return months[monthNumeric - 1];
+}
+
+// Iterate through the arrays and update the labels
+usersMonthlyCounts.forEach(item => {
+    const [year, month] = item.label.split('-');
+    item.label = `${getMonthString(parseInt(month))}`;
+});
+
+PostMonthlyCounts.forEach(item => {
+    const [year, month] = item.label.split('-');
+    item.label = `${getMonthString(parseInt(month))}`;
+});
+
+ReportsMonthlyCounts.forEach(item => {
+    const [year, month] = item.label.split('-');
+    item.label = `${getMonthString(parseInt(month))}`;
+});
+
+
+        return {
+            usersMonthlyCounts,
+            PostMonthlyCounts,
+            ReportsMonthlyCounts
+        };
+
+    } catch (error) {
+        console.log(error);
+        if (!error.status) {
+            error = {
+                error_code: 'INTERNAL_SERVER_ERROR',
+                message: 'Something went wrong on the server',
+                status: 500,
+            };
+        }
+        throw error;
+    }
+}
+
   
   module.exports = {
     adminLogin,
@@ -226,6 +401,9 @@ const acceptKYC = async (kycId,adminId) => {
     takeAction,
     fetchAllKYC,
     rejectKYC,
-    acceptKYC
+    acceptKYC,
+    getCounts,
+    getAverage,
+    getChartData
   };
   
