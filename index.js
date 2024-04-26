@@ -55,7 +55,7 @@ app.use("/api/admin", adminRouter);
 app.use("/api/chats", chatRouter);
 
 // Define the listening port
-const port = process.env.LISTENING_PORT || 7003;
+const port = process.env.LISTENING_PORT || 7002;
 
 // Start the server
 server.listen(port, () => {

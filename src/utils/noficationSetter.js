@@ -3,6 +3,7 @@ const Notifications = require('../models/notificationModel');
 // Function to set a new notification
 const setNotification = async (userId, from, fromUser, message,type,postId=null) => {
     try {
+        const a=10;
         const notification = new Notifications({
             userId,
             postId,
