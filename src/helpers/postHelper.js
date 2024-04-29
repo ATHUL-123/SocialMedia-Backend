@@ -806,10 +806,16 @@ const fetchSavedPost = async(userId)=>{
 const fetchSavedPostFlutter = async (userId) => {
     try {
         const savedPost = await Saved.find({ userId })
-            .populate('userId')
-            .populate('postId')
+            .populate({
+                path: 'postId',
+                populate: {
+                    path: 'userId',
+                    model: 'User'
+                }
+            })
             .sort({ createdAt: -1 })
             .select('-_id'); // Exclude the _id field
+ 
         console.log(savedPost);
         return savedPost;
     } catch (error) {
