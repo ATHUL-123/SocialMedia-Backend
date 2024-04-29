@@ -91,7 +91,7 @@ const addMessage = async (conversationId, senderId, text, recieverId) => {
         let conv = await Conversation.findById(conversationId);
 
         conv.lastMessage = text;
-        conv.lastMessageTime = new Date(Date.now()).toLocaleString();
+        conv.lastMessageTime = new Date(Date.now()).toISOString();
 
         // Save the message and update the conversation
         await Promise.all([newMessage.save(), conv.save()]);
