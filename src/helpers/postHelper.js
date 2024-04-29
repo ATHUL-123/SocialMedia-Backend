@@ -810,15 +810,16 @@ const fetchSavedPostFlutter = async (userId) => {
                 path: 'postId',
                 populate: {
                     path: 'userId',
-                    model: 'User'
+                    model: 'user'
                 }
             })
             .sort({ createdAt: -1 })
             .select('-_id'); // Exclude the _id field
  
-        console.log(savedPost);
+       
         return savedPost;
     } catch (error) {
+        console.log(error);
         throw {
             error_code: 'INTERNAL_SERVER_ERROR',
             message: 'Something went wrong on the server',

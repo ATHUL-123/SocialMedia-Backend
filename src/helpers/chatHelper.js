@@ -76,35 +76,41 @@ const getAllConversationsByUserId = (userId) => {
     });
 };
 
-const addMessage = ( conversationId,senderId, text,recieverId) => {
-    return new Promise((resolve, reject) => {
-        try {
-            // Create a new message instance
-            console.log(conversationId,'conv id');
-            const newMessage = new Message({
-                senderId,
-                conversationId,
-                text,
-                recieverId
-            });
+const addMessage = async (conversationId, senderId, text, recieverId) => {
+    try {
+        // Create a new message instance
+        console.log(conversationId, 'conv id');
+        const newMessage = new Message({
+            senderId,
+            conversationId,
+            text,
+            recieverId
+        });
 
-            // Save the message to the database
-            newMessage.save()
-                .then(savedMessage => {
-                    resolve({
-                        data: savedMessage,
-                        status: 200,
-                        message: 'Message created successfully'
-                    });
-                })
-                .catch(error => {
-                    reject(error);
-                });
-        } catch (error) {
-            reject(error);
-        }
-    });
+        // Find the conversation by ID and update the last message and last message time
+        let conv = await Conversation.findById(conversationId);
+
+        conv.lastMessage = text;
+        conv.lastMessageTime = Date.now();
+
+        // Save the message and update the conversation
+        await Promise.all([newMessage.save(), conv.save()]);
+
+        return {
+            data: newMessage,
+            status: 200,
+            message: 'Message created successfully'
+        };
+    } catch (error) {
+        throw {
+            error_code: 'INTERNAL_SERVER_ERROR',
+            message: 'Something went wrong on the server',
+            status: 500,
+            error: error // Optionally include the actual error for debugging purposes
+        };
+    }
 };
+
 
 const getAllMessages = (conversationId) => {
     return new Promise((resolve, reject) => {
