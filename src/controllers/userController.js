@@ -445,6 +445,40 @@ const getNotificationCount = async(req,res)=>{
  
 }
 
+const forgotPassWord = async(req,res)=>{
+  try {
+    const  {email} = req.query
+   
+   const response = await userHelper.forgotPassWord(email)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+ 
+}
+
+const verifyForgotOTP = async(req,res)=>{
+  try {
+    const  {email,otp} = req.query
+   
+   const response = await userHelper.verifyOTP(email,otp)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
+const changePassword = async(req,res)=>{
+  try {
+    const  {email,password} = req.body
+   
+   const response = await userHelper.changePassword(email,password)
+    res.status(200).send(response)
+  } catch (error) {
+    res.status(500).send(error)
+  }
+}
+
 
 module.exports={
  
@@ -473,6 +507,9 @@ module.exports={
     kycPost,
     isKycSubmitted,
     getConnectionCount,
-    getNotificationCount
+    getNotificationCount,
+    forgotPassWord,
+    verifyForgotOTP,
+    changePassword
 
 }

@@ -19,7 +19,7 @@ const KYC = require('../models/kycModel')
 const logginedUser = (userId) => {
   return new Promise(async (resolve, reject) => {
     try {
-      const user = await User.findById(userId)
+      const user = await User.findById(userId).select('-password')
 
       if (user) {
         resolve(user)
@@ -103,10 +103,10 @@ const sendVerifyEmail = (data) => {
 const verifyEmailOtp = (email, token) => {
   return new Promise((resolve, reject) => {
     try {
-      console.log('here');
+      
       verifyOtp(email, token)
         .then(async (response) => {
-          User.findOne({ email: email })
+          User.findOne({ email: email }).select('-password')
             .then((user) => {
               console.log('inside');
               resolve(user);
@@ -342,11 +342,11 @@ const fetchUsersHelp = async (userId, page, limit, searchQuery = '') => {
       let users;
       if (searchQuery) {
         totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' }, userName: { $regex: searchQuery, $options: 'i' } });
-        users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' }, userName: { $regex: searchQuery, $options: 'i' } })
+        users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' }, userName: { $regex: searchQuery, $options: 'i' } }).select('-password')
           .skip((page - 1) * limit)
           .limit(limit);
       } else {
-        totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } });
+        totalCount = await User.countDocuments({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } }).select('-password');
         users = await User.find({ _id: { $nin: [...followingIds, userId] }, role: { $ne: 'Admin' } })
           .skip((page - 1) * limit)
           .limit(limit);
@@ -378,9 +378,9 @@ const fetchUsersBySearchQuery = async (searchQuery = '') => {
         users = await User.find({
           role: { $ne: 'Admin' },
           userName: { $regex: searchQuery, $options: 'i' }
-        });
+        }).select('-password');
       } else {
-        users = await User.find({ role: { $ne: 'Admin' } });
+        users = await User.find({ role: { $ne: 'Admin' } }).select('-password');
       }
 
       resolve(users);
@@ -579,7 +579,7 @@ const getUserById = (userId, ownId) => {
       console.log('Fetching user...');
 
       // Fetch the user by userId
-      const user = await User.findById(userId);
+      const user = await User.findById(userId).select('-password');
 
       if (!user) {
         throw new Error('User not found');
@@ -633,7 +633,7 @@ const getUserById = (userId, ownId) => {
 const togglePrivacy = async (userId) => {
   try {
     // Assuming you have a User model
-    const user = await User.findById(userId);
+    const user = await User.findById(userId).select('-password');
     if (!user) {
       throw new Error('User not found');
     }
@@ -958,6 +958,80 @@ const getCounts= async (userId)=> {
   }
 }
 
+const forgotPassWord =async (email)=>{
+  try {
+    const data ={
+      email:email
+    }
+    const response = await sendEmail(data);
+    return response;
+    
+  } catch (error) {
+    console.error('Error while getting counts:', error);
+    throw error;
+  }
+}
+
+const verifyOTP = async (email, otp) => {
+  try {
+    const verify = await Verify.findOne({ email: email });
+    
+    if (!verify) {
+ return {
+        status: 404,
+        error_code: "ACCOUNT_NOT_FOUND",
+        message: "You have no account.",
+      };
+    }
+
+
+    
+    if (verify.token === otp) {
+      return {email:email,status:true};
+    } else {
+      return {email:email,status:false};
+    }
+  } catch (error) {
+    console.error('Error while verifying OTP:', error);
+    throw {
+      status: 500,
+      error_code: "INTERNAL_SERVER_ERROR",
+      message: "Something went wrong while verifying OTP.",
+    };
+  }
+};
+
+const changePassword = async (email,password) => {
+  try {
+  
+    const user = await User.findOne({ email: email });
+    
+    if (!user) {
+      throw {
+        status: 404,
+        error_code: "USER_NOT_FOUND",
+        message: "User not found.",
+      };
+    }
+    const hashedPassword = await bcrypt.hash(password, saltRounds);
+    user.password = hashedPassword;
+    await user.save();
+
+    // Removing password field before returning user
+    user.password = undefined;
+
+    return user;
+  } catch (error) {
+    console.error('Error while changing password:', error);
+    throw {
+      status: 500,
+      error_code: "INTERNAL_SERVER_ERROR",
+      message: "Something went wrong while changing password.",
+    };
+  }
+};
+
+
 
 module.exports = {
   sendVerifyEmail,
@@ -985,7 +1059,10 @@ module.exports = {
   kycPost,
   isKycSubmitted,
   getCounts,
-  getNotificationCount
+  getNotificationCount,
+  forgotPassWord,
+  verifyOTP,
+  changePassword
 }
 
 
