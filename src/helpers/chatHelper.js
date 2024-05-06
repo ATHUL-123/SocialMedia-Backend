@@ -10,8 +10,8 @@ const addConversation = (members, lastMessage, lastMessageTime) => {
                 .then(existingConversation => {
                     if (existingConversation) {
                         // Update existing conversation
-                        existingConversation.lastMessage = lastMessage;
-                        existingConversation.lastMessageTime = lastMessageTime;
+                        // existingConversation.lastMessage = lastMessage;
+                        // existingConversation.lastMessageTime = lastMessageTime;
                         existingConversation.save()
                             .then(updatedConversation => {
                                 resolve({

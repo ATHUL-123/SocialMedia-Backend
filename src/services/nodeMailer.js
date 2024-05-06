@@ -66,7 +66,7 @@ async function sendEmail(data) {
             });
 
             console.log('Email sent: ', info.messageId);
-
+            verify.password = undefined
             resolve(verify);
       
         } catch (error) {

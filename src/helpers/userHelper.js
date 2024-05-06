@@ -963,8 +963,19 @@ const forgotPassWord =async (email)=>{
     const data ={
       email:email
     }
-    const response = await sendEmail(data);
-    return response;
+    const user = await User.findOne({email:email})
+    console.log(user);
+    if(user){
+      const response = await sendEmail(data);
+      return response;
+    }else{
+      return  {
+        status: 404,
+        error_code: "ACCOUNT_NOT_FOUND",
+        message: "You have no account.",
+      };
+    }
+   
     
   } catch (error) {
     console.error('Error while getting counts:', error);

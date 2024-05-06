@@ -471,7 +471,7 @@ const verifyForgotOTP = async(req,res)=>{
 const changePassword = async(req,res)=>{
   try {
     const  {email,password} = req.body
-   
+    
    const response = await userHelper.changePassword(email,password)
     res.status(200).send(response)
   } catch (error) {
